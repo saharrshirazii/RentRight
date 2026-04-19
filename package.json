@@ -16,10 +16,10 @@
   "description": "RentRight",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
     "dev:backend": "cd backend && npm run dev",
-  "dev:frontend": "cd frontend && npm run dev",
-  "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
   },
   "repository": {
     "type": "git",
@@ -32,5 +32,8 @@
   "bugs": {
     "url": "https://github.com/saharrshirazii/RentRight/issues"
   },
-  "homepage": "https://github.com/saharrshirazii/RentRight#readme"
+  "homepage": "https://github.com/saharrshirazii/RentRight#readme",
+  "devDependencies": {
+    "tailwind-merge": "^3.5.0"
+  }
 }
