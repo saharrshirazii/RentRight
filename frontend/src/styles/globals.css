@@ -1,5 +1,7 @@
 /*TAILWIND IMPORT*/
 
+
+/* Style för komponenterna price, title, subtitle, stat-icon och listing-card */
 :root {
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #0f172a;
@@ -100,3 +102,4 @@ body {
   font-size: 0.95rem;
   font-weight: 700;
 }
+/*Radera när det inte behövs längre*/
