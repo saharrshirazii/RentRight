@@ -1,0 +1,1 @@
+//Logik för att skapa annonser och hämta annonser
