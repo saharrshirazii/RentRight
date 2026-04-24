@@ -1,4 +1,9 @@
-node_modules/
-.env
+frontend/node_modules/
+backend/node_modules/
 dist/
-
+.vite/
+.env
+.vscode/
+package-lock.json
+.DS_Store
+./backend/.env

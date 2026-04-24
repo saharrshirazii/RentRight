@@ -1,7 +1,8 @@
 import express,  { Response, type Application, type Request } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { connectToDatabase } from './config/db.js';
+import {connectToDatabase} from './config/db.js'
+
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 
 //Connect to MongoDB
 connectToDatabase();
+
 
 interface User {
     id: number;
