@@ -4,6 +4,5 @@ dist/
 .vite/
 .env
 .vscode/
-package-lock.json
 .DS_Store
 ./backend/.env
