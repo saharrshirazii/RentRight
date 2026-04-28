@@ -70,5 +70,7 @@ export default function App() {
         error="Password must be 8 characters" // Example of an error state
       />
     </main>
+
+    
   );
 }
