@@ -4,14 +4,15 @@ const connectDB = async () => {
   try {
     const uri = process.env.MONGODB_URI;
     if (!uri) {
-      throw new Error("MONGODB_URI saknas i .env filen");
+      console.warn("⚠️ MONGODB_URI saknas. Servern startar utan MongoDB.");
+      return;
     }
 
     await mongoose.connect(uri);
     console.log("✅ MongoDB Atlas ansluten!");
   } catch (error: any) {
-    console.error("❌ MongoDB anslutningsfel:", error.message);
-    process.exit(1);
+    console.warn("⚠️ MongoDB anslutningsfel:", error.message);
+    console.warn("Servern fortsätter utan MongoDB för lokala in-memory endpoints.");
   }
 };
 

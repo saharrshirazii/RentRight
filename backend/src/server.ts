@@ -8,11 +8,10 @@ const PORT = process.env.PORT || 3002;
 
 const startServer = async () => {
   try {
-    await connectDB();
     app.listen(PORT, () => {
       console.log(`🚀 Server körs på http://localhost:${PORT}`);
-      console.log(`📡 MongoDB ansluten (Atlas)`);
     });
+    await connectDB();
   } catch (error) {
     console.error("❌ Serverfel:", error);
   }
