@@ -1,4 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import FilterSection from "./components/FilterSection/FilterSection";
+import Hero from "./components/Hero/Hero";
+import Navbar from "./components/Navbar/Navbar";
+import PropertyGrid from "./components/PropertyGrid/PropertyGrid";
+
+type Experience = "host" | "explore";
 
 type TabId =
   | "boende"
@@ -80,6 +86,7 @@ const bookings = [
 ];
 
 function App() {
+  const [experience, setExperience] = useState<Experience>("host");
   const [activeTab, setActiveTab] = useState<TabId>("boende");
   const [listings, setListings] = useState<Listing[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -140,6 +147,10 @@ function App() {
     }
   };
 
+  if (experience === "explore") {
+    return <ExploreView onOpenHost={() => setExperience("host")} />;
+  }
+
   return (
     <main className="host-shell">
       <section className={isCreateOpen ? "host-frame is-blurred" : "host-frame"}>
@@ -150,7 +161,11 @@ function App() {
             <button type="button" className="quick-nav__icon" aria-label="Theme toggle">
               ◔
             </button>
-            <button type="button" className="quick-nav__item">
+            <button
+              type="button"
+              className="quick-nav__item"
+              onClick={() => setExperience("explore")}
+            >
               Utforska
             </button>
             <button type="button" className="quick-nav__item quick-nav__item--active">
@@ -549,6 +564,22 @@ function BookingsView() {
         ))}
       </div>
     </div>
+  );
+}
+
+function ExploreView({ onOpenHost }: { onOpenHost: () => void }) {
+  return (
+    <main>
+      <Navbar />
+      <div className="explore-host-switch">
+        <button type="button" className="primary-button" onClick={onOpenHost}>
+          Mina boenden
+        </button>
+      </div>
+      <Hero />
+      <FilterSection />
+      <PropertyGrid />
+    </main>
   );
 }
 

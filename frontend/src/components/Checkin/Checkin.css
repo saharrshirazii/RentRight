@@ -1,0 +1,22 @@
+@reference "../../../index.css";
+
+/* selected day circle */
+.p-datepicker .p-datepicker-calendar td > span.p-highlight {
+    @apply rounded-full bg-indigo-700 text-white;
+}
+
+/* Hover states for unselected days */
+.p-datepicker .p-datepicker-calendar td > span:not(.p-highlight):hover {
+    @apply bg-indigo-50 rounded-full;
+}
+
+/* The "IDAG" button */
+.p-datepicker .p-datepicker-header .p-datepicker-today-button,
+.p-datepicker .p-datepicker-footer .p-button-text {
+    @apply !text-indigo-600 !font-bold;
+}
+
+/* The Calendar Panel*/
+.custom-calendar-panel {
+    @apply !shadow-2xl !rounded-xl px-2 py-2 !z-[999] text-sm text-gray-700 bg-white;
+}
