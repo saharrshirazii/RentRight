@@ -22,7 +22,7 @@ const Input: React.FC<InputProps> = ({
                 value={value}
                 placeholder={placeholder}
                 onChange={onChange}
-                className={`input-field ${error ? 'input-error-border' : ''}`}                
+                className={`input-field ${error ? 'input-error-border' : ''}`}
                 {...rest} />
             {error && (<span className="input-error-text">{error}</span>)}
         </div>
@@ -30,5 +30,3 @@ const Input: React.FC<InputProps> = ({
 };
 
 export default Input;
-
-

@@ -1,3 +1,12 @@
 Komponenterna: 
 Price, Subtitle, Title.
 Testa och se ifall det ser bra ut med lite design.
+
+
+Jobba med issue #7 Skapa annons
+Som värd vill jag skapa en annons.
+
+Acceptanskriterier:
+Lägg till titel, beskrivning, pris
+Ladda upp bilder (metadata)
+Lägg till bekvämligheter

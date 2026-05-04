@@ -22,8 +22,8 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     <div className="group cursor-pointer bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300">
       {/* Image Container */}
       <div className="relative h-64 overflow-hidden">
-        <img 
-          src={property.image} 
+        <img
+          src={property.image}
           alt={property.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
@@ -42,7 +42,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             <span className="text-gray-400 text-xs">({property.reviews})</span>
           </div>
         </div>
-        
+
         <p className="text-xs text-gray-500 mt-1">{property.location}</p>
 
         {/* Features Row */}
@@ -67,4 +67,3 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
     </div>
   );
 };
-

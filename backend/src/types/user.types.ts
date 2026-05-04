@@ -24,4 +24,3 @@ export interface UpdateUserBody {
     password?: string;
     role?: 'guest' | 'host' | 'admin' ;
 }
-

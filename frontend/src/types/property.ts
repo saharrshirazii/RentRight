@@ -1,7 +1,7 @@
 import MysigstugaIGoteborg from "../assets/MysigstugaIGoteborg.jpg";
 import MysigLagenhetIStockholm from '../assets/MysigLagenhetIStockholm.jpg';
 import VackertRadhusIMalmo from '../assets/VackertRadhusIMalmo.jpg';
-import MysigVillaIOrebro from '../assets/MysigVillaIOrebro.jpg';
+import MysigVillaIOrebro from '../assets/MysigVillaIorebro.jpg';
 import MysigVillaIStockholm from '../assets/MysigVillaIStockholm.jpg';
 import MysigStudioIonkoping from '../assets/MysigStudioIonkoping.jpg';
 
