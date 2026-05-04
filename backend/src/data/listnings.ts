@@ -8,6 +8,8 @@ type CreateListningInput = {
   images: ListingImage[];
 };
 
+type UpdateListningInput = Partial<CreateListningInput>;
+
 const listnings: Listning[] = [
   {
     id: 'seed-1',
@@ -32,6 +34,21 @@ export const createListning = (input: CreateListningInput) => {
 
   listnings.unshift(listning);
   return listning;
+};
+
+export const updateListning = (id: string, input: UpdateListningInput) => {
+  const listningIndex = listnings.findIndex((listning) => listning.id === id);
+
+  if (listningIndex === -1) {
+    return null;
+  }
+
+  listnings[listningIndex] = {
+    ...listnings[listningIndex],
+    ...input,
+  };
+
+  return listnings[listningIndex];
 };
 
 export const deleteListning = (id: string) => {
