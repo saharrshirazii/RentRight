@@ -1,7 +1,8 @@
 export interface User {
-    id: number;
+    id: string;
     name: string;
     email: string;
+    password: string;
     role: 'guest' | 'host' | 'admin' ;
 }
 
@@ -12,13 +13,15 @@ export interface UserParams {
 export interface CreateUserBody {
     name: string;
     email: string;
+    password: string;
     role: 'guest' | 'host' | 'admin' ;
 }
 
 
 export interface UpdateUserBody {
-    name: string;
-    email: string;
-    role: 'guest' | 'host' | 'admin' ;
+    name?: string;
+    email?: string;
+    password?: string;
+    role?: 'guest' | 'host' | 'admin' ;
 }
 

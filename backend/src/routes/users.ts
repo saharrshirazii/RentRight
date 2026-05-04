@@ -1,6 +1,7 @@
 import express , {Router , Request , Response , NextFunction} from 'express';
 import  { UserParams, CreateUserBody , UpdateUserBody } from '../types/user.types' ;
 import User from '../models/User';
+import bcrypt from 'bcryptjs';
 
 const router = Router();
 
@@ -33,13 +34,28 @@ router.get('/:id' , async(req: Request , res: Response , next: NextFunction) => 
 router.post ('/' , async (req : Request<{} , {}, CreateUserBody> , res: Response , next: NextFunction) => {
     try {
         //Validation
-        const {name , email , role} = req.body;
-        if(!name || !email) {
-            return void res.status(404).json({message: 'Name and Email are required.'})
+        const {name , email, password , role} = req.body;
+        if(!name || !email || !password) {
+            return void res.status(404).json({message: 'Name, Email and Password are required.'})
         }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         // Mongoose handles ID generation and saving
-        const createUser = await User.create({name , email , role:role || 'guest'});
-        res.status(201).json(createUser);
+        const createUser = await User.create({
+            name , 
+            email , 
+            password: hashedPassword, 
+            role:role || 'guest'
+        });
+
+        res.status(201).json({
+            id: createUser.id,
+            name: createUser.name,
+            email: createUser.email,
+            role: createUser.role
+        });
     }catch(error){
         next(error); // Pass to error-handling middleware
   }
@@ -51,7 +67,9 @@ router.post ('/' , async (req : Request<{} , {}, CreateUserBody> , res: Response
 // PATCH /api/v1/users/:id
 router.patch('/:id', async (req: Request<UserParams, {}, UpdateUserBody>, res: Response, next: NextFunction) => {
     try {
-        const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true , runValidators: true });
+
+        const { password, ...updateData } = req.body;
+        const updatedUser = await User.findByIdAndUpdate(req.params.id, updateData, { new: true , runValidators: true });
        
         if (!updatedUser) {
             return void res.status(404).json({ message: "User not found" });
