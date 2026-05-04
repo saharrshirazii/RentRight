@@ -1,132 +1,81 @@
-import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import logo from '../../assets/Logo.png';
+import { useState } from 'react';
+import Toggle from './../Toggle/Toggle.tsx';
 
-const navigation = [
-  { name: 'Dashboard', href: '#', current: true },
-  { name: 'Team', href: '#', current: false },
-  { name: 'Projects', href: '#', current: false },
-  { name: 'Calendar', href: '#', current: false },
-]
+const Navbar = () => {
+  // State to handle mobile menu visibility
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ')
-}
-
-export default function Navbar() {
   return (
-    <Disclosure as="nav" className="relative bg-white">
-      <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-        <div className="relative flex h-16 items-center justify-between">
-          <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
-            {/* Mobile menu button*/}
-            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-2 focus:-outline-offset-1 focus:outline-indigo-500">
-              <span className="absolute -inset-0.5" />
-              <span className="sr-only">Open main menu</span>
-              <Bars3Icon aria-hidden="true" className="block size-6 group-data-open:hidden" />
-              <XMarkIcon aria-hidden="true" className="hidden size-6 group-data-open:block" />
-            </DisclosureButton>
-          </div>
-          <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-            <div className="flex shrink-0 items-center">
-              <img
-                alt="RentRight"
-                src={logo}
-                className="h-8 w-auto"
-              />
-            </div>
-            <div className="hidden sm:ml-6 sm:block">
-              <div className="flex space-x-4">
-                {navigation.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    aria-current={item.current ? 'page' : undefined}
-                    className={classNames(
-                      item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white',
-                      'rounded-md px-3 py-2 text-sm font-medium',
-                    )}
-                  >
-                    {item.name}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-            <button
-              type="button"
-              className="relative rounded-full p-1 text-gray-400 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
-            >
-              <span className="absolute -inset-1.5" />
-              <span className="sr-only">View notifications</span>
-              <BellIcon aria-hidden="true" className="size-6" />
-            </button>
+    <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white sticky top-0 z-50 transition-all">
+      {/* Logo */}
+      <a href="/">
+        <h1 className="text-2xl font-bold text-indigo-600 tracking-tight">
+          RentRight
+        </h1>
+      </a>
 
-            {/* Profile dropdown */}
-            <Menu as="div" className="relative ml-3">
-              <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
-                <span className="absolute -inset-1.5" />
-                <span className="sr-only">Open user menu</span>
-                <img
-                  alt=""
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                  className="size-8 rounded-full bg-gray-800 outline -outline-offset-1 outline-white/10"
-                />
-              </MenuButton>
+      {/* Mobile Menu Toggle Button */}
+      <button 
+        aria-label="Menu" 
+        onClick={() => setIsMenuOpen(!isMenuOpen)} 
+        className="sm:hidden outline-none"
+      >
+        <svg width="21" height="15" viewBox="0 0 21 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="21" height="1.5" rx=".75" fill="#426287"/>
+          <rect x="8" y="6" width="13" height="1.5" rx=".75" fill="#426287"/>
+          <rect x="6" y="13" width="15" height="1.5" rx=".75" fill="#426287"/>
+        </svg>
+      </button>
 
-              <MenuItems
-                transition
-                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg outline outline-black/5 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
-              >
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
-                  >
-                    Your profile
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
-                  >
-                    Settings
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
-                  >
-                    Sign out
-                  </a>
-                </MenuItem>
-              </MenuItems>
-            </Menu>
-          </div>
-        </div>
+      {/* Mobile Menu Dropdown */}
+      <div className={`${isMenuOpen ? 'flex' : 'hidden'} absolute top-[65px] left-0 w-full bg-white shadow-md py-4 flex-col items-start gap-2 px-8 text-sm md:hidden z-40 border-t border-gray-100`}>
+        <a href="#" className="block py-2 text-gray-600 hover:text-indigo-600">Home</a>
+        <a href="#" className="block py-2 text-gray-600 hover:text-indigo-600">About</a>
+        <a href="#" className="block py-2 text-gray-600 hover:text-indigo-600">Contact</a>
+        <button className="w-full cursor-pointer px-6 py-2 mt-2 bg-indigo-500 hover:bg-indigo-600 transition text-white rounded-full text-sm">
+          Logga in
+        </button>
       </div>
 
-      <DisclosurePanel className="sm:hidden">
-        <div className="space-y-1 px-2 pt-2 pb-3">
-          {navigation.map((item) => (
-            <DisclosureButton
-              key={item.name}
-              as="a"
-              href={item.href}
-              aria-current={item.current ? 'page' : undefined}
-              className={classNames(
-                item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white',
-                'block rounded-md px-3 py-2 text-base font-medium',
-              )}
-            >
-              {item.name}
-            </DisclosureButton>
-          ))}
+      {/* Desktop Menu */}
+      <div className="hidden sm:flex items-center gap-8 font-medium text-gray-600">
+        {/* <a href="#" className="hover:text-indigo-600 transition">Home</a>
+        <a href="#" className="hover:text-indigo-600 transition">About</a>
+        <a href="#" className="hover:text-indigo-600 transition">Contact</a>
+         */}
+         <div className=" flex flex-wrap items-center justify-center ">
+      <Toggle label="" initialState={true} />
+    </div>
+
+        {/* Search Bar */}
+        <div className="hidden lg:flex items-center text-sm gap-2 border border-gray-300 px-3 rounded-full hover:border-indigo-500 focus-within:border-indigo-500 transition">
+          <input 
+            className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500" 
+            type="text" 
+            placeholder="söka här" 
+          />
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10.836 10.615 15 14.695" stroke="#7A7B7D" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path clipRule="evenodd" d="M9.141 11.738c2.729-1.136 4.001-4.224 2.841-6.898S7.67.921 4.942 2.057C2.211 3.193.94 6.281 2.1 8.955s4.312 3.92 7.041 2.783" stroke="#7A7B7D" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </div>
-      </DisclosurePanel>
-    </Disclosure>
-  )
-}
+
+        {/* Cart/Notification Icon */}
+        <div className="relative cursor-pointer hover:opacity-80 transition">
+          <svg width="18" height="18" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M.583.583h2.333l1.564 7.81a1.17 1.17 0 0 0 1.166.94h5.67a1.17 1.17 0 0 0 1.167-.94l.933-4.893H3.5m2.333 8.75a.583.583 0 1 1-1.167 0 .583.583 0 0 1 1.167 0m6.417 0a.583.583 0 1 1-1.167 0 .583.583 0 0 1 1.167 0" stroke="#615fff" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="absolute -top-2 -right-3 flex items-center justify-center text-[10px] text-white bg-indigo-500 w-[18px] h-[18px] rounded-full">
+            3
+          </span>
+        </div>
+
+        <button className="cursor-pointer px-8 py-2 bg-black hover:bg-black-600 transition text-white rounded-full">
+          Logga  in
+        </button>
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
