@@ -1,6 +1,7 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import userRouter from './routes/users';
+import authRoutes from './routes/auth';
 
 const app:Application = express();
 
@@ -10,6 +11,7 @@ app.use(express.json());
 
 //Routes
 app.use('/api/v1/users' , userRouter);
+app.use('/api/v1/auth', authRoutes);
 
 // Basic Health Check
 app.get('/', (req: Request, res: Response) => {
