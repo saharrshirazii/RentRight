@@ -11,10 +11,15 @@ const categories = [
   { name: 'Lyx', icon: '🌟' },
 ];
 
+type FilterOption = {
+    value: string | number;
+    label: string;
+};
+
 const FilterSection: React.FC = () => {
     // Manage the selected state as the whole Option object
-    const [typeOption, setTypeOption] = useState({ value: 'all', label: 'Alla typer' });
-    const [priceOption, setPriceOption] = useState({ value: 'all', label: 'Alla priser' });
+    const [typeOption, setTypeOption] = useState<FilterOption>({ value: 'all', label: 'Alla typer' });
+    const [priceOption, setPriceOption] = useState<FilterOption>({ value: 'all', label: 'Alla priser' });
 
     // Define our options
     const typeOptions = [
@@ -35,7 +40,7 @@ const FilterSection: React.FC = () => {
         {/* Category Icons Row */}
         <div className="flex items-center gap-8 mb-6 overflow-x-auto pb-2 scrollbar-hide">
             {categories.map((cat)=>(
-                <div 
+                <div
                 key={cat.name}
                 className={`flex flex-col items-center gap-2 cursor-pointer border-b-2 pb-2 transition-all ${
               cat.active ? 'border-black opacity-100' : 'border-transparent opacity-60 hover:opacity-100'
@@ -55,16 +60,16 @@ const FilterSection: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4 w-full md:w-auto">
-          <Dropdown 
-                        label={typeOption.label} 
-                        options={typeOptions} 
-                        onSelect={(opt) => setTypeOption(opt)} 
+          <Dropdown
+                        label={typeOption.label}
+                        options={typeOptions}
+                        onSelect={(opt) => setTypeOption(opt)}
                     />
 
-                    <Dropdown 
-                        label={priceOption.label} 
-                        options={priceOptions} 
-                        onSelect={(opt) => setPriceOption(opt)} 
+                    <Dropdown
+                        label={priceOption.label}
+                        options={priceOptions}
+                        onSelect={(opt) => setPriceOption(opt)}
                     />
         </div>
 
@@ -85,7 +90,7 @@ const FilterDropdown = ({ label, options }: { label: string; options: string[] }
 
   return (
     <div className="relative flex-1 md:w-48">
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium hover:bg-gray-50 transition"
       >
@@ -96,7 +101,7 @@ const FilterDropdown = ({ label, options }: { label: string; options: string[] }
       {isOpen && (
         <div className="absolute top-full mt-2 w-full bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden">
           {options.map((opt) => (
-            <div 
+            <div
               key={opt}
               onClick={() => { setSelected(opt); setIsOpen(false); }}
               className="px-4 py-2 text-sm hover:bg-indigo-50 cursor-pointer transition"

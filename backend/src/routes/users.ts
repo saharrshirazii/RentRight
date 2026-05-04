@@ -44,9 +44,9 @@ router.post ('/' , async (req : Request<{} , {}, CreateUserBody> , res: Response
 
         // Mongoose handles ID generation and saving
         const createUser = await User.create({
-            name , 
-            email , 
-            password: hashedPassword, 
+            name ,
+            email ,
+            password: hashedPassword,
             role:role || 'guest'
         });
 
@@ -59,7 +59,7 @@ router.post ('/' , async (req : Request<{} , {}, CreateUserBody> , res: Response
     }catch(error){
         next(error); // Pass to error-handling middleware
   }
-    
+
 });
 
 
@@ -70,7 +70,7 @@ router.patch('/:id', async (req: Request<UserParams, {}, UpdateUserBody>, res: R
 
         const { password, ...updateData } = req.body;
         const updatedUser = await User.findByIdAndUpdate(req.params.id, updateData, { new: true , runValidators: true });
-       
+
         if (!updatedUser) {
             return void res.status(404).json({ message: "User not found" });
         }
@@ -94,9 +94,9 @@ router.delete('/:id', async (req: Request<UserParams>, res: Response, next: Next
             return void res.status(404).json({ message: 'User not found.' });
         }
 
-        res.status(200).json({ 
+        res.status(200).json({
             message: 'User successfully deleted from database.',
-            id: req.params.id 
+            id: req.params.id
         });
     } catch (error) {
         next(error);

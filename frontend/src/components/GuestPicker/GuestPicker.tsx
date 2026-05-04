@@ -23,9 +23,9 @@ const GuestPicker: React.FC = () => {
   return (
     <div className="relative w-full">
       <p className="text-xs font-bold text-gray-700 mb-2 ml-1">Vem</p>
-      
+
       {/* Trigger Button */}
-      <div 
+      <div
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between border border-gray-200 rounded-lg py-2 px-2 cursor-pointer hover:border-indigo-500 hover:bg-gray-50 transition-all mr-2"
       >
@@ -44,8 +44,8 @@ const GuestPicker: React.FC = () => {
           <GuestRow label="Vuxna" sub="13 år och äldre" value={counts.adults} onAdd={() => updateCount('adults', 'add')} onRemove={() => updateCount('adults', 'remove')} />
           <GuestRow label="Barn" sub="0-12 år" value={counts.children} onAdd={() => updateCount('children', 'add')} onRemove={() => updateCount('children', 'remove')} />
           <GuestRow label="Husdjur" sub="Tar du med ett tjänstedjur?" value={counts.pets} onAdd={() => updateCount('pets', 'add')} onRemove={() => updateCount('pets', 'remove')} />
-          
-          <button 
+
+          <button
             onClick={() => setIsOpen(false)}
             className="w-full mt-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold hover:bg-black transition-colors"
           >

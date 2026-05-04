@@ -18,18 +18,17 @@ export default function Checkin({label} : CheckinProps) {
                 <label htmlFor="buttondisplay" className="font-bold block mb-2 text-gray-700 text-sm">
                     {label}
                 </label>
-                <Calendar 
-                className="w-full bg-white border border-gray-300 rounded-lg hover:border-indigo-500 hover:bg-gray-50 focus-within:border-indigo-500 transition-colors text-sm py-2 px-2" 
+                <Calendar
+                className="w-full bg-white border border-gray-300 rounded-lg hover:border-indigo-500 hover:bg-gray-50 focus-within:border-indigo-500 transition-colors text-sm py-2 px-2"
                 panelClassName="custom-calendar-panel"
-                id="buttondisplay" 
-                value={date} 
+                id="buttondisplay"
+                value={date}
                 placeholder="Välj datum"
-                onChange={(e) => setDate(e.value)} 
-                showIcon 
+                onChange={(e) => setDate(e.value)}
+                showIcon
                 />
             </div>
-           
+
         </div>
     )
 }
-        

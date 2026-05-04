@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Toggle from './../Toggle/Toggle.tsx';
+import Toggle from './../Toggle/Toggle';
 
 const Navbar = () => {
   // State to handle mobile menu visibility
@@ -15,9 +15,9 @@ const Navbar = () => {
       </a>
 
       {/* Mobile Menu Toggle Button */}
-      <button 
-        aria-label="Menu" 
-        onClick={() => setIsMenuOpen(!isMenuOpen)} 
+      <button
+        aria-label="Menu"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
         className="sm:hidden outline-none"
       >
         <svg width="21" height="15" viewBox="0 0 21 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -49,10 +49,10 @@ const Navbar = () => {
 
         {/* Search Bar */}
         <div className="hidden lg:flex items-center text-sm gap-2 border border-gray-300 px-3 rounded-full hover:border-indigo-500 focus-within:border-indigo-500 transition">
-          <input 
-            className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500" 
-            type="text" 
-            placeholder="söka här" 
+          <input
+            className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500"
+            type="text"
+            placeholder="söka här"
           />
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M10.836 10.615 15 14.695" stroke="#7A7B7D" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
