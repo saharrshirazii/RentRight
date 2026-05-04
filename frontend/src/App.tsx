@@ -5,39 +5,36 @@ import { useState } from "react";
 import Dropdown from "./components/Dropdown/Dropdown";
 import Input from "./components/Input/Input";
 import Navbar from "./components/Navbar/Navbar";
+import Hero from "./components/Hero/Hero";
+import FilterSection from "./components/FilterSection/FilterSection";
+import PropertyGrid from "./components/PropertyGrid/PropertyGrid";
 
-//Dropdow category
-const categoryOptions = [
-  { label: "Select All", value: "select_all" },
-  { label: "Electronics", value: "electronics" },
-  { label: "Clothing", value: "clothing" },
-  { label: "Home & Garden", value: "home_garden" },
-];
 
-function StatIcon({ icon, value }: { icon: string; value: number }) {
-  return (
-    <div className="stat-icon">
-      <span className="stat-icon__emoji" aria-hidden="true">
-        {icon}
-      </span>
-      <span className="stat-icon__value">{value}</span>
-    </div>
-  );
-}
+// function StatIcon({ icon, value }: { icon: string; value: number }) {
+//   return (
+//     <div className="stat-icon">
+//       <span className="stat-icon__emoji" aria-hidden="true">
+//         {icon}
+//       </span>
+//       <span className="stat-icon__value">{value}</span>
+//     </div>
+//   );
+// }
 
 export default function App() {
   //dropdown select category
-  const [selectedCategory, setSelectedCategory] = useState<string>("Select a Category");
+  // const [selectedCategory, setSelectedCategory] = useState<string>("Select a Category");
 
   //handle select function to show an option when we select it.
-  const handleSelect = (option: { label: string; value: string | number }) => {
-    setSelectedCategory(option.label);
-  };
+  // const handleSelect = (option: { label: string; value: string | number }) => {
+  //   setSelectedCategory(option.label);
+  // };
 
   return (
-    <main className="page-shell">
-      <Navbar/>
-      <section className="listing-card">
+    <main >
+       <Navbar/>
+       <Hero/>
+      {/* <section className="listing-card">
         <div className="listing-card__content">
           <Subtitle>Superhost i Stockholm</Subtitle>
           <Title as="h1">Mysig stuga vid vattnet</Title>
@@ -68,7 +65,9 @@ export default function App() {
         label="Password"
         type="password"
         error="Password must be 8 characters" // Example of an error state
-      />
+      /> */} 
+      <FilterSection/>
+      <PropertyGrid/>
     </main>
   );
 }
