@@ -20,7 +20,16 @@ authRoutes.post('/login', async (req: Request, res: Response) => {
             return res.status(401).json({message: "Fel email eller lösenord"});
         }
 
-        res.status(200).json({message: "Du är inloggad"});
+        res.status(200).json({
+            message: "Du är inloggad",
+            user:{
+                id:user.id,
+                name:user.name, 
+                email:user.email,
+                role:user.role
+            }
+        });
+
     }
 
     catch(error){
