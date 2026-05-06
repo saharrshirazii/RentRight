@@ -47,7 +47,7 @@ router.post ('/' , async (req : Request<{} , {}, CreateUserBody> , res: Response
             name ,
             email ,
             password: hashedPassword,
-            role:role || 'guest'
+            role: 'guest'
         });
 
         res.status(201).json({

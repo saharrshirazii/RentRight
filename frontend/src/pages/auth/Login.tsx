@@ -10,6 +10,32 @@ function LogIn({ onToggle }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const handleLogin = async () => {
+    try {
+      const response = await fetch("http://localhost:3002/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Spara token och användarinfo
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        
+        alert("Inloggad! Välkommen " + data.user.name);
+        window.location.reload(); // Ladda om sidan för att uppdatera navbaren
+      } else {
+        alert(data.message || "Inloggningen misslyckades");
+      }
+    } catch (error) {
+      console.error("Fel vid inloggning:", error);
+      alert("Kunde inte ansluta till servern");
+    }
+  };
+
   return (
     <div className="w-full max-w-[400px] mx-auto antialiased h-fit">
       <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
@@ -49,7 +75,7 @@ function LogIn({ onToggle }: LoginProps) {
             </div>
 
             <div className="mt-4">
-              <Button onClick={() => console.log("Loggar in...")} className="w-full py-4 text-base font-semibold text-white bg-gray-950 rounded-full hover:bg-indigo-700 transition-all duration-300 shadow-[0_4px_14px_rgba(0,0,0,0.15)] active:scale-[0.98]">
+              <Button onClick={handleLogin} className="w-full py-4 text-base font-semibold text-white bg-gray-950 rounded-full hover:bg-indigo-700 transition-all duration-300 shadow-[0_4px_14px_rgba(0,0,0,0.15)] active:scale-[0.98]">
                 Logga in
               </Button>
             </div>
