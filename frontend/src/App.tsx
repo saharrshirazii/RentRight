@@ -204,7 +204,7 @@ function App() {
           </div>
 
           <button type="button" className="primary-button" onClick={() => setIsCreateOpen(true)}>
-            + Lagg till boende
+            + Lägg till boende
           </button>
         </section>
 
@@ -644,7 +644,7 @@ function ListingsView({
         <h2>Inga annonser ännu</h2>
         <p>Skapa ditt första boende så dyker det upp här.</p>
         <button type="button" className="primary-button" onClick={onCreate}>
-          + Lagg till boende
+          + Lägg till boende
         </button>
       </div>
     );
