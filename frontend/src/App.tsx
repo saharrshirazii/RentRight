@@ -90,16 +90,22 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>("boende");
   const [listings, setListings] = useState<Listing[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
+  const [viewingListing, setViewingListing] = useState<Listing | null>(null);
   const [isLoadingListings, setIsLoadingListings] = useState(true);
   const [listingError, setListingError] = useState("");
   const [deletingListingId, setDeletingListingId] = useState("");
+
+  const hasOpenModal = isCreateOpen || Boolean(editingListing) || Boolean(viewingListing);
 
   const fetchListings = async () => {
     setIsLoadingListings(true);
     setListingError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/listnings`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/listnings`, {
+      credentials: 'include',
+    });
       if (!response.ok) {
         throw new Error("Kunde inte hämta annonser.");
       }
@@ -123,13 +129,23 @@ function App() {
     setActiveTab("boende");
   };
 
+  const handleListingUpdated = (updatedListing: Listing) => {
+    setListings((currentListings) =>
+      currentListings.map((listing) =>
+        listing.id === updatedListing.id ? updatedListing : listing,
+      ),
+    );
+    setEditingListing(null);
+  };
+
   const handleDeleteListing = async (listingId: string) => {
     setDeletingListingId(listingId);
     setListingError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/listnings/${listingId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/listnings/${listingId}`, {
         method: "DELETE",
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -153,7 +169,7 @@ function App() {
 
   return (
     <main className="host-shell">
-      <section className={isCreateOpen ? "host-frame is-blurred" : "host-frame"}>
+      <section className={hasOpenModal ? "host-frame is-blurred" : "host-frame"}>
         <header className="topbar">
           <div className="brand">RentRight</div>
 
@@ -191,7 +207,7 @@ function App() {
           </div>
 
           <button type="button" className="primary-button" onClick={() => setIsCreateOpen(true)}>
-            + Lagg till boende
+            + Lägg till boende
           </button>
         </section>
 
@@ -227,6 +243,8 @@ function App() {
               listings={listings}
               onCreate={() => setIsCreateOpen(true)}
               onDelete={handleDeleteListing}
+              onEdit={setEditingListing}
+              onView={setViewingListing}
             />
           ) : null}
           {activeTab === "bokningar" ? <BookingsView /> : null}
@@ -239,9 +257,34 @@ function App() {
       {isCreateOpen ? (
         <div className="modal-backdrop" role="presentation">
           <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="create-listing-title">
-            <CreateListingForm
+            <ListingForm
+              mode="create"
               onCancel={() => setIsCreateOpen(false)}
-              onCreated={handleListingCreated}
+              onSaved={handleListingCreated}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {editingListing ? (
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="edit-listing-title">
+            <ListingForm
+              listing={editingListing}
+              mode="edit"
+              onCancel={() => setEditingListing(null)}
+              onSaved={handleListingUpdated}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {viewingListing ? (
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal-panel modal-panel--wide" role="dialog" aria-modal="true" aria-labelledby="view-listing-title">
+            <ListingPreviewModal
+              listing={viewingListing}
+              onClose={() => setViewingListing(null)}
             />
           </div>
         </div>
@@ -250,28 +293,69 @@ function App() {
   );
 }
 
-type CreateListingFormProps = {
+type ListingFormProps = {
+  listing?: Listing;
+  mode: "create" | "edit";
   onCancel: () => void;
-  onCreated: (listing: Listing) => void;
+  onSaved: (listing: Listing) => void;
 };
 
-function CreateListingForm({ onCancel, onCreated }: CreateListingFormProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(["Wifi"]);
+function ListingForm({ listing, mode, onCancel, onSaved }: ListingFormProps) {
+  const [title, setTitle] = useState(listing?.title ?? "");
+  const [description, setDescription] = useState(listing?.description ?? "");
+  const [price, setPrice] = useState(listing ? String(listing.price) : "");
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(listing?.amenities ?? ["Wifi"]);
   const [customAmenity, setCustomAmenity] = useState("");
-  const [images, setImages] = useState<FileList | null>(null);
+  const [existingImages, setExistingImages] = useState<ListingImage[]>(listing?.images ?? []);
+  const [images, setImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const isEditing = mode === "edit";
 
   const imageMetadata = useMemo(() => {
-    return Array.from(images ?? []).map((image) => ({
+    return images.map((image) => ({
       name: image.name,
+      previewUrl: URL.createObjectURL(image),
       size: `${Math.ceil(image.size / 1024)} KB`,
       type: image.type,
     }));
   }, [images]);
+
+  useEffect(() => {
+    return () => {
+      imageMetadata.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+    };
+  }, [imageMetadata]);
+
+  const handleImageSelection = (selectedFiles: FileList | null, inputElement?: HTMLInputElement) => {
+    console.log("handleImageSelection called with:", selectedFiles);
+    console.log("selectedFiles length:", selectedFiles?.length);
+    
+    if (!selectedFiles) {
+      console.log("No files selected, returning");
+      return;
+    }
+    
+    const fileArray = Array.from(selectedFiles);
+    console.log("Files array:", fileArray.map(f => ({ name: f.name, size: f.size, type: f.type })));
+    
+    setImages((currentImages) => {
+      const newImages = [...currentImages, ...fileArray];
+      console.log("New images array:", newImages);
+      return newImages;
+    });
+    
+    // Nollställ input så att samma fil kan väljas igen om man vill
+    if (inputElement) inputElement.value = "";
+  };
+
+  const removeNewImage = (imageIndex: number) => {
+    setImages((currentImages) => currentImages.filter((_image, index) => index !== imageIndex));
+  };
+
+  const removeExistingImage = (imageId: string) => {
+    setExistingImages((currentImages) => currentImages.filter((image) => image.id !== imageId));
+  };
 
   const toggleAmenity = (amenity: string) => {
     setSelectedAmenities((currentAmenities) =>
@@ -305,37 +389,73 @@ function CreateListingForm({ onCancel, onCreated }: CreateListingFormProps) {
     formData.append("description", description.trim());
     formData.append("price", price);
     formData.append("amenities", JSON.stringify(selectedAmenities));
-    Array.from(images ?? []).forEach((image) => formData.append("images", image));
+    formData.append("keepImageIds", JSON.stringify(existingImages.map((image) => image.id)));
+    
+    // Debug logging
+    console.log("Images array:", images);
+    console.log("Images length:", images.length);
+    console.log("Image details:", images.map(img => ({
+      name: img.name,
+      size: img.size,
+      type: img.type
+    })));
+    
+    images.forEach((image) => {
+      console.log("Appending image:", image.name);
+      formData.append("images", image);
+    });
 
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/listnings`, {
-        method: "POST",
+      const response = await fetch(
+        isEditing && listing
+          ? `${API_BASE_URL}/api/v1/listnings/${listing.id}`
+          : `${API_BASE_URL}/api/v1/listnings`,
+        {
+        method: isEditing ? "PUT" : "POST",
         body: formData,
-      });
+        credentials: 'include',
+        },
+      );
 
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as { message?: string } | null;
-        throw new Error(data?.message ?? "Kunde inte skapa annonsen.");
+        throw new Error(data?.message ?? (isEditing ? "Kunde inte spara annonsen." : "Kunde inte skapa annonsen."));
       }
 
-      const listing = (await response.json()) as Listing;
-      onCreated(listing);
+      const savedListing = (await response.json()) as Listing;
+      onSaved(savedListing);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Något gick fel.");
+      console.error("Submit error:", submitError);
+      console.error("Error details:", {
+        message: submitError instanceof Error ? submitError.message : 'Unknown error',
+        stack: submitError instanceof Error ? submitError.stack : undefined,
+        isEditing,
+        hasImages: images.length > 0,
+        imageCount: images.length,
+        existingImageCount: existingImages.length
+      });
+      setError(submitError instanceof Error ? submitError.message : "Ett oväntat fel uppstod.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // ... (rest of the code remains the same)
   return (
     <form className="create-listing-form" onSubmit={handleSubmit}>
       <div className="section-heading">
-        <div className="section-heading__icon">+</div>
+        <div className="section-heading__icon">{isEditing ? "✎" : "+"}</div>
         <div>
-          <h2 id="create-listing-title">Skapa annons</h2>
-          <p>Lägg till titel, beskrivning, pris, bilder och bekvämligheter.</p>
+          <h2 id={isEditing ? "edit-listing-title" : "create-listing-title"}>
+            {isEditing ? "Redigera annons" : "Skapa annons"}
+          </h2>
+          <p>
+            {isEditing
+              ? "Uppdatera titel, beskrivning, pris, bilder och bekvämligheter."
+              : "Lägg till titel, beskrivning, pris, bilder och bekvämligheter."}
+          </p>
         </div>
       </div>
 
@@ -357,16 +477,39 @@ function CreateListingForm({ onCancel, onCreated }: CreateListingFormProps) {
 
         <label className="field field--wide">
           <span>Bilder</span>
-          <input accept="image/*" multiple type="file" onChange={(event) => setImages(event.target.files)} />
+          <input
+            accept="image/*"
+            multiple
+            type="file"
+            onChange={(event) => handleImageSelection(event.target.files, event.target)}
+          />
         </label>
       </div>
 
+      {isEditing && existingImages.length > 0 ? (
+        <div className="image-list" aria-label="Befintliga bilder">
+          {existingImages.map((image) => (
+            <div key={image.id} className="image-list__item">
+              <img src={`${API_BASE_URL}${image.url}`} alt={image.originalName} className="image-list__preview" />
+              <span>{image.originalName} · {Math.ceil(image.size / 1024)} KB · {image.mimetype}</span>
+              <button type="button" className="ghost-button ghost-button--danger" onClick={() => removeExistingImage(image.id)}>
+                Ta bort bild
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       {imageMetadata.length > 0 ? (
-        <div className="image-metadata" aria-label="Valda bilders metadata">
-          {imageMetadata.map((image) => (
-            <span key={`${image.name}-${image.size}`}>
-              {image.name} · {image.size} · {image.type}
-            </span>
+        <div className="image-list" aria-label="Valda bilders metadata">
+          {imageMetadata.map((image, index) => (
+            <div key={`${image.name}-${image.size}-${index}`} className="image-list__item">
+              <img src={image.previewUrl} alt={image.name} className="image-list__preview" />
+              <span>{image.name} · {image.size} · {image.type}</span>
+              <button type="button" className="ghost-button ghost-button--danger" onClick={() => removeNewImage(index)}>
+                Ta bort bild
+              </button>
+            </div>
           ))}
         </div>
       ) : null}
@@ -406,10 +549,98 @@ function CreateListingForm({ onCancel, onCreated }: CreateListingFormProps) {
           Avbryt
         </button>
         <button type="submit" className="primary-button" disabled={isSubmitting}>
-          {isSubmitting ? "Skapar..." : "Skapa annons"}
+          {isSubmitting
+            ? isEditing ? "Sparar..." : "Skapar..."
+            : isEditing ? "Spara ändringar" : "Skapa annons"}
         </button>
       </div>
     </form>
+  );
+}
+
+function ListingPreviewModal({ listing, onClose }: { listing: Listing; onClose: () => void }) {
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const hasImages = listing.images.length > 0;
+  const activeImage = listing.images[activeImageIndex];
+
+  const goToPreviousImage = () => {
+    setActiveImageIndex((currentIndex) =>
+      currentIndex === 0 ? listing.images.length - 1 : currentIndex - 1,
+    );
+  };
+
+  const goToNextImage = () => {
+    setActiveImageIndex((currentIndex) =>
+      currentIndex === listing.images.length - 1 ? 0 : currentIndex + 1,
+    );
+  };
+
+  return (
+    <article className="listing-preview">
+      <div className="listing-preview__header">
+        <div>
+          <h2 id="view-listing-title">{listing.title}</h2>
+          <p>{listing.price.toLocaleString("sv-SE")} kr/natt</p>
+        </div>
+        <button type="button" className="ghost-button" onClick={onClose}>
+          Stäng
+        </button>
+      </div>
+
+      <div className="carousel" aria-label="Bildkarusell">
+        {hasImages ? (
+          <img
+            src={`${API_BASE_URL}${activeImage.url}`}
+            alt={activeImage.originalName}
+            className="carousel__image"
+          />
+        ) : (
+          <div className="carousel__empty">Inga bilder uppladdade</div>
+        )}
+
+        {listing.images.length > 1 ? (
+          <>
+            <button
+              type="button"
+              className="carousel__arrow carousel__arrow--left"
+              aria-label="Föregående bild"
+              onClick={goToPreviousImage}
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              className="carousel__arrow carousel__arrow--right"
+              aria-label="Nästa bild"
+              onClick={goToNextImage}
+            >
+              ›
+            </button>
+          </>
+        ) : null}
+      </div>
+
+      {listing.images.length > 1 ? (
+        <div className="carousel__dots" aria-label="Välj bild">
+          {listing.images.map((image, index) => (
+            <button
+              key={image.id}
+              type="button"
+              className={index === activeImageIndex ? "carousel__dot is-active" : "carousel__dot"}
+              aria-label={`Visa bild ${index + 1}`}
+              onClick={() => setActiveImageIndex(index)}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      <p className="listing-preview__description">{listing.description}</p>
+      <div className="listing-card__meta">
+        {listing.amenities.map((amenity) => (
+          <span key={amenity}>{amenity}</span>
+        ))}
+      </div>
+    </article>
   );
 }
 
@@ -420,6 +651,8 @@ type ListingsViewProps = {
   listings: Listing[];
   onCreate: () => void;
   onDelete: (listingId: string) => void;
+  onEdit: (listing: Listing) => void;
+  onView: (listing: Listing) => void;
 };
 
 function ListingsView({
@@ -429,6 +662,8 @@ function ListingsView({
   listings,
   onCreate,
   onDelete,
+  onEdit,
+  onView,
 }: ListingsViewProps) {
   if (isLoading) {
     return <div className="placeholder-card">Hämtar annonser...</div>;
@@ -449,7 +684,7 @@ function ListingsView({
         <h2>Inga annonser ännu</h2>
         <p>Skapa ditt första boende så dyker det upp här.</p>
         <button type="button" className="primary-button" onClick={onCreate}>
-          + Lagg till boende
+          + Lägg till boende
         </button>
       </div>
     );
@@ -462,15 +697,20 @@ function ListingsView({
 
         return (
         <article key={listing.id} className="listing-card">
-          <div
-            className="listing-card__image"
-            aria-hidden="true"
-            style={
-              firstImage
-                ? { backgroundImage: `url(${API_BASE_URL}${firstImage.url})` }
-                : undefined
-            }
-          />
+          <div className="listing-card__image">
+            {firstImage ? (
+              <img 
+                src={`${API_BASE_URL}${firstImage.url}`} 
+                alt={listing.title}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: '12px'
+                }}
+              />
+            ) : null}
+          </div>
 
           <div className="listing-card__body">
             <div className="listing-card__top">
@@ -496,10 +736,10 @@ function ListingsView({
             </div>
 
             <div className="listing-card__actions">
-              <button type="button" className="ghost-button">
+              <button type="button" className="ghost-button" onClick={() => onView(listing)}>
                 Visa
               </button>
-              <button type="button" className="ghost-button">
+              <button type="button" className="ghost-button" onClick={() => onEdit(listing)}>
                 Redigera
               </button>
               <button
