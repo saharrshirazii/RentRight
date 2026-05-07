@@ -273,6 +273,9 @@ button {
     linear-gradient(135deg, #714f33 0%, #b77b3f 42%, #573d2f 100%);
   background-position: center;
   background-size: cover;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  position: relative;
 }
 
 .listing-card__body {

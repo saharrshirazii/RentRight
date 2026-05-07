@@ -103,7 +103,9 @@ function App() {
     setListingError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/listnings`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/listnings`, {
+      credentials: 'include',
+    });
       if (!response.ok) {
         throw new Error("Kunde inte hämta annonser.");
       }
@@ -143,6 +145,7 @@ function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/listnings/${listingId}`, {
         method: "DELETE",
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -325,10 +328,23 @@ function ListingForm({ listing, mode, onCancel, onSaved }: ListingFormProps) {
   }, [imageMetadata]);
 
   const handleImageSelection = (selectedFiles: FileList | null, inputElement?: HTMLInputElement) => {
+    console.log("handleImageSelection called with:", selectedFiles);
+    console.log("selectedFiles length:", selectedFiles?.length);
+    
     if (!selectedFiles) {
+      console.log("No files selected, returning");
       return;
     }
-    setImages((currentImages) => [...currentImages, ...Array.from(selectedFiles)]);
+    
+    const fileArray = Array.from(selectedFiles);
+    console.log("Files array:", fileArray.map(f => ({ name: f.name, size: f.size, type: f.type })));
+    
+    setImages((currentImages) => {
+      const newImages = [...currentImages, ...fileArray];
+      console.log("New images array:", newImages);
+      return newImages;
+    });
+    
     // Nollställ input så att samma fil kan väljas igen om man vill
     if (inputElement) inputElement.value = "";
   };
@@ -374,7 +390,20 @@ function ListingForm({ listing, mode, onCancel, onSaved }: ListingFormProps) {
     formData.append("price", price);
     formData.append("amenities", JSON.stringify(selectedAmenities));
     formData.append("keepImageIds", JSON.stringify(existingImages.map((image) => image.id)));
-    images.forEach((image) => formData.append("images", image));
+    
+    // Debug logging
+    console.log("Images array:", images);
+    console.log("Images length:", images.length);
+    console.log("Image details:", images.map(img => ({
+      name: img.name,
+      size: img.size,
+      type: img.type
+    })));
+    
+    images.forEach((image) => {
+      console.log("Appending image:", image.name);
+      formData.append("images", image);
+    });
 
     setIsSubmitting(true);
 
@@ -386,6 +415,7 @@ function ListingForm({ listing, mode, onCancel, onSaved }: ListingFormProps) {
         {
         method: isEditing ? "PUT" : "POST",
         body: formData,
+        credentials: 'include',
         },
       );
 
@@ -397,12 +427,22 @@ function ListingForm({ listing, mode, onCancel, onSaved }: ListingFormProps) {
       const savedListing = (await response.json()) as Listing;
       onSaved(savedListing);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Något gick fel.");
+      console.error("Submit error:", submitError);
+      console.error("Error details:", {
+        message: submitError instanceof Error ? submitError.message : 'Unknown error',
+        stack: submitError instanceof Error ? submitError.stack : undefined,
+        isEditing,
+        hasImages: images.length > 0,
+        imageCount: images.length,
+        existingImageCount: existingImages.length
+      });
+      setError(submitError instanceof Error ? submitError.message : "Ett oväntat fel uppstod.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // ... (rest of the code remains the same)
   return (
     <form className="create-listing-form" onSubmit={handleSubmit}>
       <div className="section-heading">
@@ -657,15 +697,20 @@ function ListingsView({
 
         return (
         <article key={listing.id} className="listing-card">
-          <div
-            className="listing-card__image"
-            aria-hidden="true"
-            style={
-              firstImage
-                ? { backgroundImage: `url(${API_BASE_URL}${firstImage.url})` }
-                : undefined
-            }
-          />
+          <div className="listing-card__image">
+            {firstImage ? (
+              <img 
+                src={`${API_BASE_URL}${firstImage.url}`} 
+                alt={listing.title}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: '12px'
+                }}
+              />
+            ) : null}
+          </div>
 
           <div className="listing-card__body">
             <div className="listing-card__top">
