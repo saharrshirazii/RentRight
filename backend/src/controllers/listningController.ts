@@ -27,6 +27,23 @@ const parseAmenities = (value: unknown) => {
   return [];
 };
 
+const parseKeepImageIds = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value.map(String);
+  }
+
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map(String) : null;
+  } catch {
+    return value.split(',').map((item) => item.trim()).filter(Boolean);
+  }
+};
+
 export const listListnings = (_req: Request, res: Response) => {
   res.json(getListnings());
 };
@@ -90,19 +107,21 @@ export const editListning = async (req: Request, res: Response) => {
     url: `/uploads/${file.filename}`,
   }));
 
-  const shouldReplaceImages = req.body.replaceImages === 'true';
-  const images = shouldReplaceImages && uploadedImages.length > 0
-    ? uploadedImages
+  const keepImageIds = parseKeepImageIds(req.body.keepImageIds);
+  const keptImages = keepImageIds
+    ? currentListning.images.filter((image) => keepImageIds.includes(image.id))
     : currentListning.images;
+  const removedImages = currentListning.images.filter(
+    (image) => !keptImages.some((keptImage) => keptImage.id === image.id),
+  );
+  const images = [...keptImages, ...uploadedImages];
 
-  if (shouldReplaceImages && uploadedImages.length > 0) {
-    await Promise.all(
-      currentListning.images.map(async (image) => {
-        const imagePath = path.join(uploadDirectory, image.filename);
-        await fs.unlink(imagePath).catch(() => undefined);
-      }),
-    );
-  }
+  await Promise.all(
+    removedImages.map(async (image) => {
+      const imagePath = path.join(uploadDirectory, image.filename);
+      await fs.unlink(imagePath).catch(() => undefined);
+    }),
+  );
 
   const updatedListning = updateListning(req.params.id, {
     title: String(title).trim(),

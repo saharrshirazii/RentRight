@@ -671,6 +671,42 @@ button {
   font-weight: 600;
 }
 
+.image-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.image-list__item {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 8px 7px 12px;
+  border: 1px solid #d8e1ee;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.image-list__preview {
+  width: 52px;
+  height: 42px;
+  flex: 0 0 52px;
+  border-radius: 7px;
+  object-fit: cover;
+  background: #e2e8f0;
+}
+
+.image-list__item span {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .amenities-panel {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

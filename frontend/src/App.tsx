@@ -103,7 +103,7 @@ function App() {
     setListingError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/listnings`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/listnings`);
       if (!response.ok) {
         throw new Error("Kunde inte hämta annonser.");
       }
@@ -141,7 +141,7 @@ function App() {
     setListingError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/listnings/${listingId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/listnings/${listingId}`, {
         method: "DELETE",
       });
 
@@ -303,18 +303,43 @@ function ListingForm({ listing, mode, onCancel, onSaved }: ListingFormProps) {
   const [price, setPrice] = useState(listing ? String(listing.price) : "");
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(listing?.amenities ?? ["Wifi"]);
   const [customAmenity, setCustomAmenity] = useState("");
-  const [images, setImages] = useState<FileList | null>(null);
+  const [existingImages, setExistingImages] = useState<ListingImage[]>(listing?.images ?? []);
+  const [images, setImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const isEditing = mode === "edit";
 
   const imageMetadata = useMemo(() => {
-    return Array.from(images ?? []).map((image) => ({
+    return images.map((image) => ({
       name: image.name,
+      previewUrl: URL.createObjectURL(image),
       size: `${Math.ceil(image.size / 1024)} KB`,
       type: image.type,
     }));
   }, [images]);
+
+  useEffect(() => {
+    return () => {
+      imageMetadata.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+    };
+  }, [imageMetadata]);
+
+  const handleImageSelection = (selectedFiles: FileList | null, inputElement?: HTMLInputElement) => {
+    if (!selectedFiles) {
+      return;
+    }
+    setImages((currentImages) => [...currentImages, ...Array.from(selectedFiles)]);
+    // Nollställ input så att samma fil kan väljas igen om man vill
+    if (inputElement) inputElement.value = "";
+  };
+
+  const removeNewImage = (imageIndex: number) => {
+    setImages((currentImages) => currentImages.filter((_image, index) => index !== imageIndex));
+  };
+
+  const removeExistingImage = (imageId: string) => {
+    setExistingImages((currentImages) => currentImages.filter((image) => image.id !== imageId));
+  };
 
   const toggleAmenity = (amenity: string) => {
     setSelectedAmenities((currentAmenities) =>
@@ -348,16 +373,16 @@ function ListingForm({ listing, mode, onCancel, onSaved }: ListingFormProps) {
     formData.append("description", description.trim());
     formData.append("price", price);
     formData.append("amenities", JSON.stringify(selectedAmenities));
-    formData.append("replaceImages", images && images.length > 0 ? "true" : "false");
-    Array.from(images ?? []).forEach((image) => formData.append("images", image));
+    formData.append("keepImageIds", JSON.stringify(existingImages.map((image) => image.id)));
+    images.forEach((image) => formData.append("images", image));
 
     setIsSubmitting(true);
 
     try {
       const response = await fetch(
         isEditing && listing
-          ? `${API_BASE_URL}/api/listnings/${listing.id}`
-          : `${API_BASE_URL}/api/listnings`,
+          ? `${API_BASE_URL}/api/v1/listnings/${listing.id}`
+          : `${API_BASE_URL}/api/v1/listnings`,
         {
         method: isEditing ? "PUT" : "POST",
         body: formData,
@@ -412,26 +437,39 @@ function ListingForm({ listing, mode, onCancel, onSaved }: ListingFormProps) {
 
         <label className="field field--wide">
           <span>Bilder</span>
-          <input accept="image/*" multiple type="file" onChange={(event) => setImages(event.target.files)} />
+          <input
+            accept="image/*"
+            multiple
+            type="file"
+            onChange={(event) => handleImageSelection(event.target.files, event.target)}
+          />
         </label>
       </div>
 
-      {isEditing && listing && listing.images.length > 0 && imageMetadata.length === 0 ? (
-        <div className="image-metadata" aria-label="Befintliga bilders metadata">
-          {listing.images.map((image) => (
-            <span key={image.id}>
-              {image.originalName} · {Math.ceil(image.size / 1024)} KB · {image.mimetype}
-            </span>
+      {isEditing && existingImages.length > 0 ? (
+        <div className="image-list" aria-label="Befintliga bilder">
+          {existingImages.map((image) => (
+            <div key={image.id} className="image-list__item">
+              <img src={`${API_BASE_URL}${image.url}`} alt={image.originalName} className="image-list__preview" />
+              <span>{image.originalName} · {Math.ceil(image.size / 1024)} KB · {image.mimetype}</span>
+              <button type="button" className="ghost-button ghost-button--danger" onClick={() => removeExistingImage(image.id)}>
+                Ta bort bild
+              </button>
+            </div>
           ))}
         </div>
       ) : null}
 
       {imageMetadata.length > 0 ? (
-        <div className="image-metadata" aria-label="Valda bilders metadata">
-          {imageMetadata.map((image) => (
-            <span key={`${image.name}-${image.size}`}>
-              {image.name} · {image.size} · {image.type}
-            </span>
+        <div className="image-list" aria-label="Valda bilders metadata">
+          {imageMetadata.map((image, index) => (
+            <div key={`${image.name}-${image.size}-${index}`} className="image-list__item">
+              <img src={image.previewUrl} alt={image.name} className="image-list__preview" />
+              <span>{image.name} · {image.size} · {image.type}</span>
+              <button type="button" className="ghost-button ghost-button--danger" onClick={() => removeNewImage(index)}>
+                Ta bort bild
+              </button>
+            </div>
           ))}
         </div>
       ) : null}

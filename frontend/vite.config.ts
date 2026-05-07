@@ -10,7 +10,7 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/api': 'http://localhost:3000', // Redirects frontend API calls to your backend
+      '/api': 'http://localhost:3002', // Redirects frontend API calls to your backend
     },
   },
 })
