@@ -14,6 +14,16 @@ const Navbar = () => {
     setIsLoginView(true); // Återställ till Login-vyn till nästa gång
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.reload();
+  };
+
+  const userStore = localStorage.getItem('user');
+
+  const showUser = userStore ? JSON.parse(userStore) : null;
+
   return (
     <>
     <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white sticky top-0 z-50 transition-all">
@@ -80,9 +90,31 @@ const Navbar = () => {
           </span>
         </div>
 
-        <button onClick={()=> setIsLoginOpen(true)} className="cursor-pointer px-8 py-2 bg-black hover:bg-black-600 transition text-white rounded-full">
-          Logga  in
-        </button>
+{showUser ? (
+  <div className="flex items-center">
+    {showUser.role === 'admin' && (
+      <span className="bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-xs font-bold mr-2">
+        Admin
+      </span>
+    )}
+    <span className="text-sm font-medium text-gray-600">Hej {showUser.name}</span>
+    
+    <button 
+      onClick={handleLogout} 
+      className="ml-4 text-xs font-medium text-gray-400 hover:text-black transition cursor-pointer underline"
+    >
+      Logga ut
+    </button>
+  </div>
+) : (
+  <button 
+    onClick={() => setIsLoginOpen(true)} 
+    className="cursor-pointer px-8 py-2 bg-black hover:bg-black-600 transition text-white rounded-full"
+  >
+    Logga in
+  </button>
+)}
+
       </div>
     </nav>
 
