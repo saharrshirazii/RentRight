@@ -86,7 +86,7 @@ const bookings = [
 ];
 
 function App() {
-  const [experience, setExperience] = useState<Experience>("host");
+  const [experience, setExperience] = useState<Experience>("explore");
   const [activeTab, setActiveTab] = useState<TabId>("boende");
   const [listings, setListings] = useState<Listing[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);

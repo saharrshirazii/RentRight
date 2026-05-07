@@ -1,11 +1,31 @@
 import { useState } from 'react';
 import Toggle from './../Toggle/Toggle';
+import LogIn from '../../pages/auth/Login';
+import Register from '../../pages/auth/Register';
 
 const Navbar = () => {
   // State to handle mobile menu visibility
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isLoginView, setIsLoginView] = useState(true);
+
+  const closeAuthModal = () => {
+    setIsLoginOpen(false);
+    setIsLoginView(true); // Återställ till Login-vyn till nästa gång
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.reload();
+  };
+
+  const userStore = localStorage.getItem('user');
+
+  const showUser = userStore ? JSON.parse(userStore) : null;
 
   return (
+    <>
     <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white sticky top-0 z-50 transition-all">
       {/* Logo */}
       <a href="/">
@@ -32,7 +52,7 @@ const Navbar = () => {
         <a href="#" className="block py-2 text-gray-600 hover:text-indigo-600">Home</a>
         <a href="#" className="block py-2 text-gray-600 hover:text-indigo-600">About</a>
         <a href="#" className="block py-2 text-gray-600 hover:text-indigo-600">Contact</a>
-        <button className="w-full cursor-pointer px-6 py-2 mt-2 bg-indigo-500 hover:bg-indigo-600 transition text-white rounded-full text-sm">
+        <button onClick={()=> setIsLoginOpen(true)} className="w-full cursor-pointer px-6 py-2 mt-2 bg-indigo-500 hover:bg-indigo-600 transition text-white rounded-full text-sm">
           Logga in
         </button>
       </div>
@@ -70,11 +90,68 @@ const Navbar = () => {
           </span>
         </div>
 
-        <button className="cursor-pointer px-8 py-2 bg-black hover:bg-black-600 transition text-white rounded-full">
-          Logga  in
-        </button>
+{showUser ? (
+  <div className="flex items-center">
+    {showUser.role === 'admin' && (
+      <span className="bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-xs font-bold mr-2">
+        Admin
+      </span>
+    )}
+    <span className="text-sm font-medium text-gray-600">Hej {showUser.name}</span>
+    
+    <button 
+      onClick={handleLogout} 
+      className="ml-4 text-xs font-medium text-gray-400 hover:text-black transition cursor-pointer underline"
+    >
+      Logga ut
+    </button>
+  </div>
+) : (
+  <button 
+    onClick={() => setIsLoginOpen(true)} 
+    className="cursor-pointer px-8 py-2 bg-black hover:bg-black-600 transition text-white rounded-full"
+  >
+    Logga in
+  </button>
+)}
+
       </div>
     </nav>
+
+    {/* 4. Modal-logiken */}
+{isLoginOpen && (
+  <div 
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md"
+    onClick={() => setIsLoginOpen(false)} // 1. Klickar man här (bakgrunden) stängs den
+  >
+    {/* 2. Vi lägger onClick med stopPropagation här för att stoppa klicket från att "bubbla upp" till bakgrunden */}
+    <div 
+      className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md m-4 overflow-hidden"
+      onClick={(e) => e.stopPropagation()} 
+    >
+      
+      {/* Stäng-knapp (X) */}
+      <button 
+        onClick={() => setIsLoginOpen(false)} 
+        className="absolute top-4 right-4 z-10 text-gray-400 hover:text-black font-bold text-xl"
+      >
+        &times;
+      </button>
+
+      {/* Innehåll */}
+      <div className="max-h-[90vh] overflow-y-auto p-8">
+        {isLoginView ? (
+          <LogIn onToggle={() => setIsLoginView(false)} />
+        ) : (
+          <Register onToggle={() => setIsLoginView(true)} />
+        )}
+      </div>
+      
+    </div>
+  </div>
+)}
+
+    </>
   );
 };
 
