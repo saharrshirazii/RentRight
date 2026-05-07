@@ -21,13 +21,12 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
             }
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
+        // Vi skapar användaren med lösenordet i klartext. 
+        // User-modellen kommer nu automatiskt att hasha det tack vare vår nya "pre-save hook".
         const newUser = await User.create({
             name,
             email,
-            password: hashedPassword,
+            password, 
             role: finalRole
         });
 
@@ -44,7 +43,6 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
         res.status(500).json({ message: "Serverfel vid registrering" });
     }
 });
-
 
 authRoutes.post('/login', async (req: Request, res: Response) => {
     try {
