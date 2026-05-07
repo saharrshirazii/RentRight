@@ -1,12 +1,15 @@
 import { useState } from "react";
 import Card from "../../components/Card/Card";
 import Button from "../../components/Button/Button";
+import { useNavigate } from 'react-router-dom'
+import { IoMapSharp } from "react-icons/io5";
 
 interface LoginProps {
   onToggle: () => void;
 }
 
 function LogIn({ onToggle }: LoginProps) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -26,6 +29,7 @@ function LogIn({ onToggle }: LoginProps) {
         localStorage.setItem("user", JSON.stringify(data.user));
         
         alert("Inloggad! Välkommen " + data.user.name);
+        navigate("/");
         window.location.reload(); // Ladda om sidan för att uppdatera navbaren
       } else {
         alert(data.message || "Inloggningen misslyckades");
