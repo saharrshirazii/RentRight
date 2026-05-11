@@ -3,8 +3,10 @@ import FilterSection from "./components/FilterSection/FilterSection";
 import Hero from "./components/Hero/Hero";
 import Navbar from "./components/Navbar/Navbar";
 import PropertyGrid from "./components/PropertyGrid/PropertyGrid";
+import ProfilePage from "./pages/profile/ProfilePage";
 
-type Experience = "host" | "explore";
+
+type Experience = "host" | "explore" | "profile";
 
 type TabId =
   | "boende"
@@ -163,8 +165,12 @@ function App() {
     }
   };
 
+  if (experience === "profile") {
+  return <ProfilePage setExperience={setExperience}/>;
+}
+
   if (experience === "explore") {
-    return <ExploreView onOpenHost={() => setExperience("host")} />;
+    return <ExploreView onOpenHost={() => setExperience("host")} setExperience={setExperience} />;
   }
 
   return (
@@ -807,10 +813,10 @@ function BookingsView() {
   );
 }
 
-function ExploreView({ onOpenHost }: { onOpenHost: () => void }) {
+function ExploreView({ onOpenHost, setExperience }: { onOpenHost: () => void, setExperience: (exp: Experience) => void }) {
   return (
     <main>
-      <Navbar />
+      <Navbar setExperience={setExperience}/>
       <div className="explore-host-switch">
         <button type="button" className="primary-button" onClick={onOpenHost}>
           Mina boenden
