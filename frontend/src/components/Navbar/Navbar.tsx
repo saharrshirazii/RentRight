@@ -7,9 +7,11 @@ import { IoIosArrowForward } from "react-icons/io";
 // 1. Lagt till interface för att TypeScript ska förstå setExperience
 interface NavbarProps {
   setExperience: (exp: "explore" | "host" | "profile") => void;
+  userData?: any;
+  setUserData?: (user:any) => void;
 }
 
-const Navbar = ({ setExperience } : NavbarProps) => {
+const Navbar = ({ setExperience, userData, setUserData } : NavbarProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLoginView, setIsLoginView] = useState(true);
