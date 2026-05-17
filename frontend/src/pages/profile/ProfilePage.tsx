@@ -4,18 +4,101 @@ import Navbar from '../../components/Navbar/Navbar';
 
 interface ProfilePageProps {
   setExperience: (exp: "explore" | "host" | "profile") => void;
+  userData: any;
+  setUserData: any;
 }
 
-const ProfilePage = ({ setExperience }: ProfilePageProps) => {
+const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps) => {
   const [activeSection, setActiveSection] = useState('messages');
   
-  const userStore = localStorage.getItem('user');
-  const user = userStore ? JSON.parse(userStore) : { name: 'Användare', role: 'Gäst' };
+  // States för lösenordsbytet
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordStatus, setPasswordStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  // Byta roll (Host / Guest) - HELT ÅTERSTÄLLD OCH UTGÅR FRÅN DINA PROPS!
+  const handleSwitchRole = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const token = localStorage.getItem("token");
+    
+    const response = await fetch("http://localhost:3002/api/v1/auth/switch-role", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      console.error("Kunde inte byta roll på servern");
+      return;
+    }
+
+    const data = await response.json(); 
+    console.log("Data från IUser-modell:", data);
+
+    const updatedUser = { 
+      ...userData, 
+      role: data.role 
+    };
+
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    setUserData(updatedUser); 
+  };
+
+  // Skicka nytt lösenord till backend
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordStatus(null);
+
+    if (newPassword !== confirmPassword) {
+      setPasswordStatus({ type: 'error', message: 'De nya lösenorden matchar inte.' });
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:3002/api/v1/auth/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setPasswordStatus({ type: 'error', message: data.message || 'Kunde inte byta lösenord.' });
+        return;
+      }
+
+      setPasswordStatus({ type: 'success', message: 'Lösenordet har ändrats!' });
+      
+      setTimeout(() => {
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setShowPasswordForm(false);
+        setPasswordStatus(null);
+      }, 2000);
+
+    } catch (error) {
+      console.error(error);
+      setPasswordStatus({ type: 'error', message: 'Ett oväntat fel inträffade.' });
+    }
+  };
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      // Mindre offset på mobilen (80) jämfört med desktop (120)
       const offset = window.innerWidth < 768 ? 80 : 120;
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = element.getBoundingClientRect().top;
@@ -85,14 +168,14 @@ const ProfilePage = ({ setExperience }: ProfilePageProps) => {
       <header className="max-w-7xl mx-auto px-6 md:px-16 lg:px-24 pt-10 md:pt-16 pb-6 md:pb-10 border-b border-gray-100">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">Profil</h2>
         <div className="flex items-center gap-3 mt-3">
-          <p className="text-lg md:text-xl text-gray-600 font-medium">{user.name}</p>
+          <p className="text-lg md:text-xl text-gray-600 font-medium">{userData?.name || 'Användare'}</p>
           <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-bold uppercase tracking-widest border border-indigo-100">
-            {user.role}
+            {userData?.role || 'guest'}
           </span>
         </div>
       </header>
 
-      {/* --- MOBIL MENY (Syns bara på små skärmar) --- */}
+      {/* --- MOBIL MENY --- */}
       <div className="md:hidden sticky top-[72px] z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 overflow-x-auto no-scrollbar">
         <div className="flex px-6 py-4 gap-6 min-w-max">
           {menuItems.map((item) => (
@@ -114,7 +197,7 @@ const ProfilePage = ({ setExperience }: ProfilePageProps) => {
 
       <div className="max-w-7xl mx-auto px-6 md:px-16 lg:px-24 flex flex-col md:flex-row gap-10 md:gap-20 mt-10 md:mt-16">
         
-        {/* --- DESKTOP MENY (Dold på mobil) --- */}
+        {/* --- DESKTOP MENY --- */}
         <aside className="hidden md:block w-72">
           <nav className="sticky top-32 space-y-10">
             <ul className="space-y-6">
@@ -137,7 +220,7 @@ const ProfilePage = ({ setExperience }: ProfilePageProps) => {
             </ul>
 
             <div className="pt-10 border-t border-gray-100 space-y-5 text-gray-500">
-              <button onClick={() => setExperience(user.role === 'host' ? 'explore' : 'host')} className="flex items-center gap-4 hover:text-indigo-600 transition-colors w-full text-left">
+              <button onClick={handleSwitchRole} className="flex items-center gap-4 hover:text-indigo-600 transition-colors w-full text-left">
                 <HiSwitchHorizontal className="text-xl" />
                 <span className="text-sm font-medium">Växla läge</span>
               </button>
@@ -171,14 +254,13 @@ const ProfilePage = ({ setExperience }: ProfilePageProps) => {
           <section id="settings" className="scroll-mt-40 md:scroll-mt-32">
             <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Inställningar</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-              {[ {label: 'Namn', val: user.name}, {label: 'E-post', val: 'E-post saknas'} ].map((box, i) => (
+              {[ {label: 'Namn', val: userData.name || 'Användare'}, {label: 'E-post', val: userData.email} ].map((box, i) => (
                 <div key={i} className="p-6 md:p-8 border border-gray-100 rounded-[1.5rem] hover:shadow-lg transition-all">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1">{box.label}</p>
                       <p className="text-gray-900 font-semibold text-base md:text-lg">{box.val}</p>
                     </div>
-                    <button className="text-indigo-600 text-xs font-bold">Ändra</button>
                   </div>
                 </div>
               ))}
@@ -187,14 +269,72 @@ const ProfilePage = ({ setExperience }: ProfilePageProps) => {
 
           <section id="security" className="scroll-mt-40 md:scroll-mt-32">
             <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Säkerhet</h3>
-            <div className="p-8 md:p-10 bg-indigo-600 rounded-[2rem] text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 shadow-lg shadow-indigo-100">
-               <div>
-                 <h4 className="font-bold text-lg md:text-xl mb-1">Ditt konto är säkert</h4>
-                 <p className="text-indigo-100 text-xs md:text-sm opacity-90">Skydda ditt konto med ett starkt lösenord.</p>
-               </div>
-               <button className="w-full sm:w-auto px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-colors shadow-sm">
-                 Byt lösenord
-               </button>
+            <div className="p-8 md:p-10 bg-indigo-600 rounded-[2rem] text-white shadow-lg shadow-indigo-100 transition-all duration-300">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                 <div>
+                   <h4 className="font-bold text-lg md:text-xl mb-1">Ditt konto är säkert</h4>
+                   <p className="text-indigo-100 text-xs md:text-sm opacity-90">Skydda ditt konto med ett starkt lösenord.</p>
+                 </div>
+                 <button 
+                   onClick={() => setShowPasswordForm(!showPasswordForm)} 
+                   className="w-full sm:w-auto px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-colors shadow-sm"
+                 >
+                   {showPasswordForm ? 'Avbryt' : 'Byt lösenord'}
+                 </button>
+              </div>
+
+              {showPasswordForm && (
+                <form onSubmit={handleChangePassword} className="mt-8 pt-8 border-t border-indigo-500/40 space-y-4 max-w-md">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-indigo-200 mb-2">Nuvarande lösenord</label>
+                    <input 
+                      type="password" 
+                      required
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-indigo-700/50 border border-indigo-500 rounded-xl text-white placeholder-indigo-300 focus:outline-none focus:border-white transition-colors"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-indigo-200 mb-2">Nytt lösenord</label>
+                    <input 
+                      type="password" 
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-indigo-700/50 border border-indigo-500 rounded-xl text-white placeholder-indigo-300 focus:outline-none focus:border-white transition-colors"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-indigo-200 mb-2">Bekräfta nytt lösenord</label>
+                    <input 
+                      type="password" 
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-indigo-700/50 border border-indigo-500 rounded-xl text-white placeholder-indigo-300 focus:outline-none focus:border-white transition-colors"
+                      placeholder="••••••••"
+                    />
+                  </div>
+
+                  {passwordStatus && (
+                    <div className={`p-4 rounded-xl text-sm font-semibold ${
+                      passwordStatus.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
+                    }`}>
+                      {passwordStatus.message}
+                    </div>
+                  )}
+
+                  <button 
+                    type="submit" 
+                    className="w-full px-6 py-3 bg-indigo-900 text-white font-bold rounded-xl hover:bg-indigo-950 transition-colors shadow-inner"
+                  >
+                    Spara nytt lösenord
+                  </button>
+                </form>
+              )}
             </div>
           </section>
         </main>

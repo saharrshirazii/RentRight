@@ -98,6 +98,18 @@ function App() {
   const [listingError, setListingError] = useState("");
   const [deletingListingId, setDeletingListingId] = useState("");
 
+const [userData, setUserData] = useState<any>(() => {
+  const savedUser = localStorage.getItem('user');
+  if (savedUser) {
+    try {
+      return JSON.parse(savedUser);
+    } catch (e) {
+      return { name: "Användare", role: "guest", email: "" };
+    }
+  }
+  return { name: "Användare", role: "guest", email: "" };
+});
+
   const hasOpenModal = isCreateOpen || Boolean(editingListing) || Boolean(viewingListing);
 
   const fetchListings = async () => {
@@ -166,11 +178,19 @@ function App() {
   };
 
   if (experience === "profile") {
-  return <ProfilePage setExperience={setExperience}/>;
+  return( 
+  <ProfilePage 
+  setExperience={setExperience}
+  userData={userData || { name: "Laddar...", role: "guest"}}
+  setUserData={setUserData}
+  />
+  );
 }
 
   if (experience === "explore") {
-    return <ExploreView onOpenHost={() => setExperience("host")} setExperience={setExperience} />;
+    return <ExploreView onOpenHost={() => setExperience("host")} 
+    setExperience={setExperience}
+    userData={userData} />;
   }
 
   return (
@@ -813,15 +833,22 @@ function BookingsView() {
   );
 }
 
-function ExploreView({ onOpenHost, setExperience }: { onOpenHost: () => void, setExperience: (exp: Experience) => void }) {
+function ExploreView({ onOpenHost, setExperience, userData }: { onOpenHost: () => void, setExperience: (exp: Experience) => void,
+  userData: any;
+ }) {
   return (
     <main>
       <Navbar setExperience={setExperience}/>
+
+      {userData.role === 'host' && (
+
       <div className="explore-host-switch">
         <button type="button" className="primary-button" onClick={onOpenHost}>
           Mina boenden
         </button>
       </div>
+      )}
+
       <Hero />
       <FilterSection />
       <PropertyGrid />
