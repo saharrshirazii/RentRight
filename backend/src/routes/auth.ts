@@ -1,31 +1,12 @@
-import { Router, Request, Response } from 'express';
-import User from '../models/User';
-import bcrypt from 'bcryptjs';
+import { Router } from 'express';
+import { register, login, switchRole, changePassword } from '../controllers/authController';
+import { verifyToken } from '../middleware/authMiddleware';
 
-const authRoutes = Router();
+const router = Router();
 
-authRoutes.post('/login', async (req: Request, res: Response) => {
-    try{
-        const { email, password } = req.body;
+router.post('/register', register);
+router.post('/login', login);
+router.patch('/switch-role', verifyToken, switchRole);
+router.post('/change-password', verifyToken, changePassword);
 
-        const user = await User.findOne({ email });
-
-        if(!user){
-            return res.status(401).json({message: "Fel email eller lösenord"});
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if(!isMatch){
-            return res.status(401).json({message: "Fel email eller lösenord"});
-        }
-
-        res.status(200).json({message: "Du är inloggad"});
-    }
-
-    catch(error){
-        res.status(500).json({message: "Serverfel"});
-    }
-});
-
-export default authRoutes;
+export default router;

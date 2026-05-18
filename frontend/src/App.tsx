@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import FilterSection from "./components/FilterSection/FilterSection";
-import Hero from "./components/Hero/Hero";
 import Navbar from "./components/Navbar/Navbar";
+import Hero from "./components/Hero/Hero";
 import PropertyGrid from "./components/PropertyGrid/PropertyGrid";
-
-// Importera de nya komponenterna och typerna
+import ProfilePage from "./pages/profile/ProfilePage";
 import ListingForm from "./components/Host/listings/ListingForm";
 import ListingPreviewModal from "./components/Host/listings/ListingPreviewModal";
 import ListingsView from "./components/Host/listings/ListingsView";
-import { Experience, Listing, TabId } from "./types/listingtypes";
+import { Listing, TabId } from "./types/listingtypes";
+
+type Experience = "host" | "explore" | "profile";
 
 const API_BASE_URL = "http://localhost:3002";
 
@@ -62,7 +62,7 @@ const bookings = [
 ];
 
 function App() {
-  const [experience, setExperience] = useState<Experience>("host");
+  const [experience, setExperience] = useState<Experience>("explore");
   const [activeTab, setActiveTab] = useState<TabId>("boende");
   const [listings, setListings] = useState<Listing[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -71,6 +71,18 @@ function App() {
   const [isLoadingListings, setIsLoadingListings] = useState(true);
   const [listingError, setListingError] = useState("");
   const [deletingListingId, setDeletingListingId] = useState("");
+
+const [userData, setUserData] = useState<any>(() => {
+  const savedUser = localStorage.getItem('user');
+  if (savedUser) {
+    try {
+      return JSON.parse(savedUser);
+    } catch (e) {
+      return { name: "Användare", role: "guest", email: "" };
+    }
+  }
+  return { name: "Användare", role: "guest", email: "" };
+});
 
   const hasOpenModal = isCreateOpen || Boolean(editingListing) || Boolean(viewingListing);
 
@@ -139,8 +151,20 @@ function App() {
     }
   };
 
+  if (experience === "profile") {
+  return( 
+  <ProfilePage 
+  setExperience={setExperience}
+  userData={userData || { name: "Laddar...", role: "guest"}}
+  setUserData={setUserData}
+  />
+  );
+}
+
   if (experience === "explore") {
-    return <ExploreView onOpenHost={() => setExperience("host")} />;
+    return <ExploreView onOpenHost={() => setExperience("host")} 
+    setExperience={setExperience}
+    userData={userData} />;
   }
 
   return (
@@ -312,17 +336,23 @@ function BookingsView() {
   );
 }
 
-function ExploreView({ onOpenHost }: { onOpenHost: () => void }) {
+function ExploreView({ onOpenHost, setExperience, userData }: { onOpenHost: () => void, setExperience: (exp: Experience) => void,
+  userData: any;
+ }) {
   return (
     <main>
-      <Navbar />
+      <Navbar setExperience={setExperience}/>
+
+      {userData.role === 'host' && (
+
       <div className="explore-host-switch">
         <button type="button" className="primary-button" onClick={onOpenHost}>
           Mina boenden
         </button>
       </div>
+      )}
+
       <Hero />
-      <FilterSection />
       <PropertyGrid />
     </main>
   );
