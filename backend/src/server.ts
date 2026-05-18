@@ -1,24 +1,22 @@
-import express,  { Response, type Application, type Request } from 'express';
+// import express,  { Response, type Application, type Request } from 'express';
 import dotenv from 'dotenv';
-import cors from 'cors';
 import app from './app';
-import { connectToDatabade } from './config/database';
+import { connectToDatabase } from './config/database';
+
 
 
 dotenv.config();
 
-
-// const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
 
 const startServer = async () => {
     try {
         // Connect to MongoDB
-        await connectToDatabade();
+        await connectToDatabase();
         
-        app.listen(PORT, () => {
-            console.log(`Server running at http://localhost:${PORT}`);
+app.listen(Number(PORT), '0.0.0.0', () => {
+                console.log(`Server is running at http://localhost:${PORT}`);
             console.log(`Health check: http://localhost:${PORT}/`);
         });
     } catch (error) {
@@ -28,3 +26,4 @@ const startServer = async () => {
 };
 
 startServer();
+

@@ -1,73 +1,29 @@
-import Price from "./components/Price/Price";
-import Subtitle from "./components/Subtitle/Subtitle";
-import Title from "./components/Title/Title";
-import { useState } from "react";
-import Dropdown from "./components/Dropdown/Dropdown";
-import Input from "./components/Input/Input";
+
+import React from "react";
 import Navbar from "./components/Navbar/Navbar";
 import Hero from "./components/Hero/Hero";
-import FilterSection from "./components/FilterSection/FilterSection";
 import PropertyGrid from "./components/PropertyGrid/PropertyGrid";
+import Footer from "./components/Footer/Footer";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { PropertyDetail } from "./components/PropertyDetail/PropertyDetail"
 
 
-// function StatIcon({ icon, value }: { icon: string; value: number }) {
-//   return (
-//     <div className="stat-icon">
-//       <span className="stat-icon__emoji" aria-hidden="true">
-//         {icon}
-//       </span>
-//       <span className="stat-icon__value">{value}</span>
-//     </div>
-//   );
-// }
-
-export default function App() {
-  //dropdown select category
-  // const [selectedCategory, setSelectedCategory] = useState<string>("Select a Category");
-
-  //handle select function to show an option when we select it.
-  // const handleSelect = (option: { label: string; value: string | number }) => {
-  //   setSelectedCategory(option.label);
-  // };
+const App: React.FC = () => {
 
   return (
-    <main >
-       <Navbar/>
-       <Hero/>
-      {/* <section className="listing-card">
-        <div className="listing-card__content">
-          <Subtitle>Superhost i Stockholm</Subtitle>
-          <Title as="h1">Mysig stuga vid vattnet</Title>
-          <Subtitle>Nära natur, bad och lugna kvällar</Subtitle>
-          <Price amount={1200} period="/natt" />
-
-          <div className="listing-card__stats" aria-label="Boendedetaljer">
-            <StatIcon icon="🛏️" value={1} />
-            <StatIcon icon="🛁" value={1} />
-            <StatIcon icon="👥" value={2} />
-          </div>
-        </div>
-      </section>
-      <Dropdown
-        label={selectedCategory}
-        options={categoryOptions}
-        onSelect={handleSelect}
-      />
-
-      <Input
-        label="Email Address"
-        type="email"
-        placeholder="you@example.com"
-        onChange={(e) => console.log(e.target.value)}
-      />
-
-      <Input
-        label="Password"
-        type="password"
-        error="Password must be 8 characters" // Example of an error state
-      /> */} 
-      <FilterSection/>
-      <PropertyGrid/>
-    </main>
+    <Router>
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <Hero />
+        <Routes>
+          <Route path="/" element={<PropertyGrid />} />
+          <Route path="/property/:id" element={<PropertyDetail />} />
+          <Route path="*" element={<div>Sidan hittades inte (404)</div>} />
+        </Routes>
+      </div>
+      <Footer />
+    </Router>
   );
 }
+
+export default App
