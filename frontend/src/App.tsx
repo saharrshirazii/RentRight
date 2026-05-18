@@ -8,9 +8,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { PropertyDetail } from "./components/PropertyDetail/PropertyDetail"
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import FilterSection from "./components/FilterSection/FilterSection";
-import Hero from "./components/Hero/Hero";
-import Navbar from "./components/Navbar/Navbar";
-import PropertyGrid from "./components/PropertyGrid/PropertyGrid";
 import ProfilePage from "./pages/profile/ProfilePage";
 
 //SAHAR
