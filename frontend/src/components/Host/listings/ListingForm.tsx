@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Listing, ListingImage } from "../types";
+import { Listing, ListingImage } from "../../../types/listingtypes";
 
 // Konstanter som komponenten behöver
 const API_BASE_URL = "http://localhost:3002";

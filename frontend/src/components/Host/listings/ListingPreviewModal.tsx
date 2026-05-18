@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Listing } from "../types";
+import { Listing } from "../../../types/listingtypes";
 
 const API_BASE_URL = "http://localhost:3002";
 
