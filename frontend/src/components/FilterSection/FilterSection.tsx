@@ -70,8 +70,8 @@ const FilterSection: React.FC<FilterSectionProps> = ({ activeSection, activePric
             label={typeOption.label}
             options={typeOptions}
             onSelect={(opt) => {
-              setTypeOption(opt);
-            onSectionChange(opt.value === 'all' ? '' : opt.value);
+              setTypeOption({ value: String(opt.value), label: opt.label });
+            onSectionChange(opt.value === 'all' ? '' : String(opt.value));
           }}
           />
 
@@ -79,8 +79,8 @@ const FilterSection: React.FC<FilterSectionProps> = ({ activeSection, activePric
             label={priceOption.label}
             options={priceOptions}
             onSelect={(opt) => {
-              setPriceOption(opt);
-              onPriceChange(opt.value);
+              setPriceOption({ value: String(opt.value), label: opt.label });
+              onPriceChange(String(opt.value));
             }}
           />
         </div>
