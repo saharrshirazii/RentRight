@@ -14,7 +14,6 @@ import ProfilePage from "./pages/profile/ProfilePage";
 //const App: React.FC = () => {
 
 //  return (
-//    <Router>
 //      <div className="min-h-screen bg-white">
 //        <Navbar />
 //        <Hero />
@@ -23,9 +22,8 @@ import ProfilePage from "./pages/profile/ProfilePage";
 //          <Route path="/property/:id" element={<PropertyDetail />} />
 //          <Route path="*" element={<div>Sidan hittades inte (404)</div>} />
  //       </Routes>
-//      </div>
 //      <Footer />
- //   </Router>
+//      </div>
 //  );
 //}
 
