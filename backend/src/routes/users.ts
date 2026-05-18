@@ -1,58 +1,68 @@
-import express , {Router , Request , Response , NextFunction} from 'express';
-import  { UserParams, CreateUserBody , UpdateUserBody } from '../types/user.types' ;
+import express, { Router, Request, Response, NextFunction } from 'express';
+import { UserParams, CreateUserBody, UpdateUserBody } from '../types/user.types';
 import User from '../models/User';
 
 const router = Router();
 
 // GET /api/v1/users – get all users
-router.get('/' , async(req: Request , res: Response , next: NextFunction) => {
-    try{
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+    try {
         const users = await User.find();
         res.json(users);
-    }catch(error){
+    } catch (error) {
         next(error);
     }
 });
 
 // GET /api/v1/users/:id – get a specific user
-router.get('/:id' , async(req: Request , res: Response , next: NextFunction) => {
-    try{
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+    try {
         const user = await User.findById(req.params.id);
-        if(!user){
-            return void res.status(404).json({message: 'User not found.'})
+        if (!user) {
+            return void res.status(404).json({ message: 'User not found.' });
         }
         res.json(user);
-    }catch(error){
+    } catch (error) {
         next(error);
     }
 });
 
-
-
-//POST /api/v1/users - create a new user
-router.post ('/' , async (req : Request<{} , {}, CreateUserBody> , res: Response , next: NextFunction) => {
+// POST /api/v1/users - create a new user
+router.post('/', async (req: Request<{}, {}, CreateUserBody>, res: Response, next: NextFunction) => {
     try {
-        //Validation
-        const {name , email , role} = req.body;
-        if(!name || !email) {
-            return void res.status(404).json({message: 'Name and Email are required.'})
+        const { name, email, password, role } = req.body;
+        if (!name || !email || !password) {
+            return void res.status(404).json({ message: 'Name, Email and Password are required.' });
         }
-        // Mongoose handles ID generation and saving
-        const createUser = await User.create({name , email , role:role || 'guest'});
-        res.status(201).json(createUser);
-    }catch(error){
-        next(error); // Pass to error-handling middleware
-  }
-    
+
+        // Vi skickar in password direkt. Modellen sköter hashningen automatiskt.
+        const createUser = await User.create({
+            name,
+            email,
+            password,
+            role: role || 'guest'
+        });
+
+        res.status(201).json({
+            id: createUser.id,
+            name: createUser.name,
+            email: createUser.email,
+            role: createUser.role
+        });
+    } catch (error) {
+        next(error);
+    }
 });
-
-
 
 // PATCH /api/v1/users/:id
 router.patch('/:id', async (req: Request<UserParams, {}, UpdateUserBody>, res: Response, next: NextFunction) => {
     try {
-        const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true , runValidators: true });
-       
+        const { password, ...updateData } = req.body;
+        
+        // OBS: findByIdAndUpdate triggar INTE "pre-save" hooks. 
+        // Om ni ska uppdatera lösenord via PATCH i framtiden behöver vi justera denna.
+        const updatedUser = await User.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
+
         if (!updatedUser) {
             return void res.status(404).json({ message: "User not found" });
         }
@@ -65,8 +75,6 @@ router.patch('/:id', async (req: Request<UserParams, {}, UpdateUserBody>, res: R
     }
 });
 
-
-
 // DELETE /api/v1/users/:id
 router.delete('/:id', async (req: Request<UserParams>, res: Response, next: NextFunction) => {
     try {
@@ -76,9 +84,9 @@ router.delete('/:id', async (req: Request<UserParams>, res: Response, next: Next
             return void res.status(404).json({ message: 'User not found.' });
         }
 
-        res.status(200).json({ 
+        res.status(200).json({
             message: 'User successfully deleted from database.',
-            id: req.params.id 
+            id: req.params.id
         });
     } catch (error) {
         next(error);

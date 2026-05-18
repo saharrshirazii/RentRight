@@ -5,8 +5,12 @@ import propertyRouter from './routes/propertyRouter';
 import errorHandler from './middleware/errorMiddleware';
 import { notFound } from './middleware/notfoundMiddleware';
 import path from 'path';
+import listningRoutes from './routes/listningRoutes';
+import { uploadDirectory } from './config/upload';
+import userRouter from './routes/users';
+import authRoutes from './routes/auth';
 
-const app:Application = express();
+const app: Application = express();
 
 // Middleware
 // app.use(cors({
@@ -15,17 +19,27 @@ const app:Application = express();
 //   credentials: true
 // }));
 app.use(cors());
-app.use(express.json());
+//app.use(cors({
+//  origin: ['http://localhost:3002', 'http://localhost:5173', 'http://localhost:8080'],
+//  credentials: true,
+//  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+//  allowedHeaders: ['Content-Type', 'Authorization']
+//}));
 
+app.use(express.json());
+app.use('/uploads', express.static(uploadDirectory));
 app.use('/assets', express.static(path.join(__dirname, '../../frontend/src/assets')));
 
 //Routes
-app.use('/api/v1/users' , router);
+//app.use('/api/v1/users' , router);
 app.use('/api/v1/properties', propertyRouter);
+app.use('/api/v1/users', userRouter);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/listnings', listningRoutes);
 
-// Basic Health Check
+
 app.get('/', (req: Request, res: Response) => {
-    res.send({ message: 'RentRight API is ready' });
+  res.send({ message: 'RentRight API is ready' });
 });
 
 //POST-MIDDLEWARE (FALLBACKS)
@@ -40,5 +54,7 @@ app.use(errorHandler);
 //         message: err.message || 'Internal Server Error',
 //     });
 // });
+
+
 
 export default app;

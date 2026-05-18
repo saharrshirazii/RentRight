@@ -54,7 +54,7 @@ app.get('/users/:id', (req: Request<UserParams>, res: Response): void => {
 // CREATE User
 app.post('/users', (req: Request<{}, {}, CreateUserBody>, res: Response) => {
     const { name, email, role } = req.body;
-    
+
     if (!name || !email) {
        return void res.status(404).json({ message: 'name and email are requierd.' });
     }

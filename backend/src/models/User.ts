@@ -6,9 +6,12 @@ export interface IUser extends Document {
     email: string;
     password: string;
     role: 'guest' | 'host' | 'admin';
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
-const UserSchema: Schema = new Schema({
+
+const UserSchema: Schema<IUser> = new Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
@@ -33,3 +36,4 @@ UserSchema.pre<IUser>('save', async function () {
 });
 
 export default mongoose.model<IUser>('User', UserSchema);
+

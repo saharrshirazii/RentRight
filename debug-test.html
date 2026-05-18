@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Create Listing</title>
+</head>
+<body>
+    <h1>Debug Create Listing</h1>
+    <form id="testForm">
+        <input type="text" id="title" placeholder="Titel" value="Test från debug"><br><br>
+        <textarea id="description" placeholder="Beskrivning">Test beskrivning</textarea><br><br>
+        <input type="number" id="price" placeholder="Pris" value="1000"><br><br>
+        <input type="file" id="images" multiple accept="image/*"><br><br>
+        <button type="submit">Skapa annons</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('title', document.getElementById('title').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('price', document.getElementById('price').value);
+            formData.append('amenities', JSON.stringify(['Wifi']));
+            formData.append('keepImageIds', JSON.stringify([]));
+            
+            const imageFiles = document.getElementById('images').files;
+            for (let i = 0; i < imageFiles.length; i++) {
+                formData.append('images', imageFiles[i]);
+            }
+            
+            try {
+                console.log('Skickar request...');
+                const response = await fetch('http://localhost:3002/api/v1/listnings', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                const result = await response.json();
+                console.log('Response data:', result);
+                
+                document.getElementById('result').innerHTML = `
+                    <h3>Resultat:</h3>
+                    <p>Status: ${response.status}</p>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `
+                    <h3>Fel:</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

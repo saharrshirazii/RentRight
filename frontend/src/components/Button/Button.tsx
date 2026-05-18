@@ -1,11 +1,15 @@
+import { ReactNode } from "react";
+
 type ButtonProps = {
-    label: string
+    onClick: () => void,
+    children ?: ReactNode;
+    className?: string;
 };
 
-const Button = ({label} : ButtonProps) => {
+const Button = ({ children, onClick, className} : ButtonProps) => {
     return(
-        <button style={{padding: "8px 16px"}}>
-            {label}
+        <button onClick={onClick}  style={{padding: "8px 16px"}} className={className}>
+            {children}
         </button>
     );
 };
