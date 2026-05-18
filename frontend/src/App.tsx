@@ -131,8 +131,10 @@ const [userData, setUserData] = useState<any>(() => {
     setListingError("");
 
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE_URL}/api/v1/listnings/${listingId}`, {
         method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         credentials: 'include',
       });
 
