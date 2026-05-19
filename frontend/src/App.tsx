@@ -10,7 +10,7 @@ import { Listing, TabId } from "./types/listingtypes";
 
 type Experience = "host" | "explore" | "profile";
 
-const API_BASE_URL = "http://localhost:3002";
+const API_BASE_URL = "http://localhost:3000";
 
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: "boende", label: "Boende" },
@@ -345,7 +345,7 @@ function ExploreView({ onOpenHost, setExperience, userData }: { onOpenHost: () =
     <main>
       <Navbar setExperience={setExperience}/>
 
-      {userData.role === 'host' && (
+      {userData?.role === 'host' && (
 
       <div className="explore-host-switch">
         <button type="button" className="primary-button" onClick={onOpenHost}>
