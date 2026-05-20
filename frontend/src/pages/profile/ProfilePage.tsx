@@ -24,7 +24,7 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
     e.stopPropagation();
     const token = localStorage.getItem("token");
     
-    const response = await fetch("http://localhost:3002/api/v1/auth/switch-role", {
+    const response = await fetch("http://localhost:3000/api/v1/auth/switch-role", {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -61,7 +61,7 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:3002/api/v1/auth/change-password", {
+      const response = await fetch("http://localhost:3000/api/v1/auth/change-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

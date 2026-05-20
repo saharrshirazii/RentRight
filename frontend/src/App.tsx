@@ -11,7 +11,7 @@ import { AdminDashboard } from "./components/admin/dashboard/AdminDashboard";
 
 type Experience = "host" | "explore" | "profile" | "admin";
 
-const API_BASE_URL = "http://localhost:3002";
+const API_BASE_URL = "http://localhost:3000";
 
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: "boende", label: "Boende" },
@@ -367,17 +367,22 @@ function ExploreView({ onOpenHost, setExperience, userData }: { onOpenHost: () =
     <main>
       <Navbar setExperience={setExperience}/>
 
-      <div className="explore-host-switch" style={{ display: 'flex', gap: '10px', padding: '10px 20px' }}>
-        {userData.role === 'host' && (
-          <button type="button" className="primary-button" onClick={onOpenHost}>
-            Mina boenden
-          </button>
-        )}
-        {/* En smidig admin-knapp även på startsidan så du lätt kan hoppa dit under utvecklingen */}
-        <button type="button" className="secondary-button" style={{ backgroundColor: '#e0e7ff', color: '#4338ca' }} onClick={() => setExperience("admin")}>
-          Gå till Admin-panelen
-        </button>
-      </div>
+<div className="explore-host-switch" style={{ display: 'flex', gap: '10px', padding: '10px 20px' }}>
+  {userData?.role === 'host' && (
+    <button type="button" className="primary-button" onClick={onOpenHost}>
+      Mina boenden
+    </button>
+  )}
+  {/* En smidig admin-knapp även på startsidan så du lätt kan hoppa dit under utvecklingen */}
+  <button 
+    type="button" 
+    className="secondary-button" 
+    style={{ backgroundColor: '#e0e7ff', color: '#4338ca' }} 
+    onClick={() => setExperience("admin")}
+  >
+    Admin sidan
+  </button>
+</div>
 
       <Hero />
       <PropertyGrid />
