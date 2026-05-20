@@ -94,12 +94,14 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
     setIsSubmitting(true);
 
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(
         isEditing && listing
           ? `${API_BASE_URL}/api/v1/listnings/${listing.id}`
           : `${API_BASE_URL}/api/v1/listnings`,
         {
           method: isEditing ? "PUT" : "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           body: formData,
           credentials: 'include',
         },
