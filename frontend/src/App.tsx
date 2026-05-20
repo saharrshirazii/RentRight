@@ -7,8 +7,9 @@ import ListingForm from "./components/Host/listings/ListingForm";
 import ListingPreviewModal from "./components/Host/listings/ListingPreviewModal";
 import ListingsView from "./components/Host/listings/ListingsView";
 import { Listing, TabId } from "./types/listingtypes";
+import { AdminDashboard } from "./components/admin/dashboard/AdminDashboard";
 
-type Experience = "host" | "explore" | "profile";
+type Experience = "host" | "explore" | "profile" | "admin";
 
 const API_BASE_URL = "http://localhost:3002";
 
@@ -72,17 +73,17 @@ function App() {
   const [listingError, setListingError] = useState("");
   const [deletingListingId, setDeletingListingId] = useState("");
 
-const [userData, setUserData] = useState<any>(() => {
-  const savedUser = localStorage.getItem('user');
-  if (savedUser) {
-    try {
-      return JSON.parse(savedUser);
-    } catch (e) {
-      return { name: "Användare", role: "guest", email: "" };
+  const [userData, setUserData] = useState<any>(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        return JSON.parse(savedUser);
+      } catch (e) {
+        return { name: "Användare", role: "guest", email: "" };
+      }
     }
-  }
-  return { name: "Användare", role: "guest", email: "" };
-});
+    return { name: "Användare", role: "guest", email: "" };
+  });
 
   const hasOpenModal = isCreateOpen || Boolean(editingListing) || Boolean(viewingListing);
 
@@ -153,27 +154,38 @@ const [userData, setUserData] = useState<any>(() => {
     }
   };
 
+  // 3. Om statet är "admin", avbryt här och rendera hela adminfrontenden
+  if (experience === "admin") {
+    return <AdminDashboard setExperience={setExperience} />;
+  }
+
   if (experience === "profile") {
-  return( 
-  <ProfilePage 
-  setExperience={setExperience}
-  userData={userData || { name: "Laddar...", role: "guest"}}
-  setUserData={setUserData}
-  />
-  );
-}
+    return (
+      <ProfilePage 
+        setExperience={setExperience}
+        userData={userData || { name: "Laddar...", role: "guest"}}
+        setUserData={setUserData}
+      />
+    );
+  }
 
   if (experience === "explore") {
-    return <ExploreView onOpenHost={() => setExperience("host")} 
-    setExperience={setExperience}
-    userData={userData} />;
+    return (
+      <ExploreView 
+        onOpenHost={() => setExperience("host")} 
+        setExperience={setExperience}
+        userData={userData} 
+      />
+    );
   }
 
   return (
     <main className="host-shell">
       <section className={hasOpenModal ? "host-frame is-blurred" : "host-frame"}>
         <header className="topbar">
-          <div className="brand">RentRight</div>
+          <div className="brand" onClick={() => setExperience("explore")} style={{ cursor: 'pointer' }}>
+            RentRight
+          </div>
 
           <nav className="quick-nav" aria-label="Main navigation">
             <button type="button" className="quick-nav__icon" aria-label="Theme toggle">
@@ -189,8 +201,21 @@ const [userData, setUserData] = useState<any>(() => {
             <button type="button" className="quick-nav__item quick-nav__item--active">
               Mina boenden
             </button>
-            <button type="button" className="quick-nav__item">
+            <button 
+              type="button" 
+              className="quick-nav__item"
+              onClick={() => setExperience("profile")}
+            >
               Profil
+            </button>
+            {/* Tillfällig knapp för att enkelt kunna klicka dig in i Admin-läget i din navbar */}
+            <button 
+              type="button" 
+              className="quick-nav__item"
+              style={{ color: '#6366f1', fontWeight: 'bold' }}
+              onClick={() => setExperience("admin")}
+            >
+              Admin
             </button>
           </nav>
 
@@ -295,7 +320,6 @@ const [userData, setUserData] = useState<any>(() => {
   );
 }
 
-// (Behåll BookingsView, ExploreView och PlaceholderView här eller flytta ut dem också vid behov)
 function BookingsView() {
   return (
     <div className="bookings-panel">
@@ -338,21 +362,22 @@ function BookingsView() {
   );
 }
 
-function ExploreView({ onOpenHost, setExperience, userData }: { onOpenHost: () => void, setExperience: (exp: Experience) => void,
-  userData: any;
- }) {
+function ExploreView({ onOpenHost, setExperience, userData }: { onOpenHost: () => void, setExperience: (exp: Experience) => void, userData: any; }) {
   return (
     <main>
       <Navbar setExperience={setExperience}/>
 
-      {userData.role === 'host' && (
-
-      <div className="explore-host-switch">
-        <button type="button" className="primary-button" onClick={onOpenHost}>
-          Mina boenden
+      <div className="explore-host-switch" style={{ display: 'flex', gap: '10px', padding: '10px 20px' }}>
+        {userData.role === 'host' && (
+          <button type="button" className="primary-button" onClick={onOpenHost}>
+            Mina boenden
+          </button>
+        )}
+        {/* En smidig admin-knapp även på startsidan så du lätt kan hoppa dit under utvecklingen */}
+        <button type="button" className="secondary-button" style={{ backgroundColor: '#e0e7ff', color: '#4338ca' }} onClick={() => setExperience("admin")}>
+          Gå till Admin-panelen
         </button>
       </div>
-      )}
 
       <Hero />
       <PropertyGrid />
