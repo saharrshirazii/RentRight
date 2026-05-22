@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Property from '../models/property';
+import Property from '../models/Property';
 
 //READ - GET /properties – get all properties
 export const getProperties = async (req: Request, res: Response) => {
