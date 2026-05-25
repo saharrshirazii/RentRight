@@ -1,6 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import Property from '../models/property';
-import {NotFoundError , ValidationError} from '../errors/AppError';
+import { Request, Response, NextFunction } from 'express'
+import {NotFoundError , ValidationError} from '../errors/AppError'
+import mongoose from 'mongoose'
+import Property from '../models/Property';
+import Booking from '../models/Booking'
+
 
 
 //READ - GET /properties – get all properties
@@ -9,6 +12,14 @@ export const getProperties = async (req: Request, res: Response, next: NextFunct
 
         //FILTERING
         const filter: any = {};
+
+        if (req.query.location){
+            filter.location = {$regex: req.query.location, $options: 'i'};
+        }
+
+        if (req.query.guests) {
+            filter.guests = parseInt(req.query.guests as string, 10);
+        }
 
         if (req.query.category) {
             filter.category = req.query.category;
@@ -30,6 +41,27 @@ export const getProperties = async (req: Request, res: Response, next: NextFunct
 
             if (price === 'high') {
                 filter.pricePerNight = { $gt: 2000 };
+            }
+        }
+
+        //
+        const {checkIn , checkOut} = req.body;
+        if(checkIn && checkOut) {
+            const searchStart = new Date (checkIn as string);
+            const searchEnd = new Date (checkOut as string);
+
+            if (searchStart >= searchEnd){
+                filter._id = new mongoose.Types.ObjectId();
+            }else {
+                const overlappingBookings = await booking.find({
+                    status : {$ne : 'cancelled'},
+                    startDate: {$lt : searchEnd},
+                    endDate: {$gt : searchStart}
+                }).select('propertyId');
+
+                const busyPropertyIds = overlappingBookings.map(b => b.PropertyId);
+
+                filter._id = {$nin: busyPropertyIds};
             }
         }
 
@@ -124,7 +156,7 @@ export const putProperty = async (req: Request, res: Response , next: NextFuncti
 
 
 
-//DELETE
+//DELETE /properties /:id - delete a property
 export const deleteProperty = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const property = await Property.findByIdAndDelete(req.params.id);

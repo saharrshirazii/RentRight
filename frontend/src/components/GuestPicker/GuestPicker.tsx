@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PlusIcon, MinusIcon, UserIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface GuestCounts {
@@ -6,18 +6,36 @@ interface GuestCounts {
   children: number;
   pets: number;
 }
+interface GuestPickerProps {
+    value: number;
+    onChange: (count: number) => void;
+}
 
-const GuestPicker: React.FC = () => {
+const GuestPicker: React.FC<GuestPickerProps> = ({ value, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [counts, setCounts] = useState<GuestCounts>({ adults: 2, children: 0, pets: 0 });
 
+  //calculate total human guests (Adults + guests)
   const totalGuests = counts.adults + counts.children;
 
+  useEffect(() => {
+    onChange(totalGuests);
+  }, [totalGuests, onChange]);
+
   const updateCount = (type: keyof GuestCounts, operation: 'add' | 'remove') => {
-    setCounts(prev => ({
-      ...prev,
-      [type]: operation === 'add' ? prev[type] + 1 : Math.max(0, prev[type] - 1)
-    }));
+    setCounts(prev => {
+      const nextValue = operation === 'add' ? prev[type] + 1 : Math.max(0, prev[type] - 1);
+      
+      // Safety rule: Don't let adults drop below 1 if there are children traveling
+      if (type === 'adults' && operation === 'remove' && nextValue < 1 && prev.children > 0) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [type]: nextValue
+      };
+    });
   };
 
   return (
@@ -32,7 +50,7 @@ const GuestPicker: React.FC = () => {
         <div className="flex items-center gap-2">
           <UserIcon className="h-5 w-5 text-gray-700" />
           <span className="text-sm text-gray-700 font-medium">
-            {totalGuests} gäster{counts.pets > 0 ? `, ${counts.pets} husdjur` : ''}
+              {totalGuests} gäst{totalGuests === 1 ? '' : 'er'}{counts.pets > 0 ? `, ${counts.pets} husdjur` : ''}
           </span>
         </div>
         <ChevronDownIcon className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -46,6 +64,7 @@ const GuestPicker: React.FC = () => {
           <GuestRow label="Husdjur" sub="Tar du med ett tjänstedjur?" value={counts.pets} onAdd={() => updateCount('pets', 'add')} onRemove={() => updateCount('pets', 'remove')} />
 
           <button
+            type="button"
             onClick={() => setIsOpen(false)}
             className="w-full mt-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold hover:bg-black transition-colors"
           >
@@ -58,18 +77,26 @@ const GuestPicker: React.FC = () => {
 };
 
 // Reusable row component for the dropdown
-const GuestRow = ({ label, sub, value, onAdd, onRemove }: any) => (
-  <div className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
+interface GuestRowProps {
+    label: string;
+    sub: string;
+    value: number;
+    onAdd: () => void;
+    onRemove: () => void;
+}
+
+const GuestRow: React.FC<GuestRowProps> = ({ label, sub, value, onAdd, onRemove }) => (
+    <div className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
     <div>
       <p className="text-sm font-bold text-gray-800">{label}</p>
       <p className="text-xs text-gray-400">{sub}</p>
     </div>
     <div className="flex items-center gap-3">
-      <button onClick={onRemove} className="p-1 rounded-full border border-gray-500 hover:border-indigo-500 text-gray-400 hover:text-indigo-500 transition-colors">
+      <button type = "button" onClick={onRemove} className="p-1 rounded-full border border-gray-500 hover:border-indigo-500 text-gray-400 hover:text-indigo-500 transition-colors">
         <MinusIcon className="h-4 w-4 text-gray-500" />
       </button>
       <span className="text-sm font-medium w-4 text-center">{value}</span>
-      <button onClick={onAdd} className="p-1 rounded-full border border-gray-500 hover:border-indigo-500 text-gray-400 hover:text-indigo-500 transition-colors">
+      <button type="button" onClick={onAdd} className="p-1 rounded-full border border-gray-500 hover:border-indigo-500 text-gray-400 hover:text-indigo-500 transition-colors">
         <PlusIcon className="h-4 w-4 text-gray-500" />
       </button>
     </div>

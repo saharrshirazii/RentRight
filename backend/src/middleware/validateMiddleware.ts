@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { AnyZodObject, ZodError } from 'zod';
+import { ZodObject, ZodError } from 'zod';
 import { ValidationError } from '../errors/AppError';
 
-export const validate = (schema: AnyZodObject) => 
+export const validate = (schema: ZodObject) => 
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       // This parses req.body, req.query, and req.params all at once
