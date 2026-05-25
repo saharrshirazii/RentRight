@@ -1,4 +1,6 @@
 import { Listning, ListingImage } from '../types';
+import ListningModel, { IListning } from '../models/Listning';
+import mongoose from 'mongoose';
 
 type CreateListningInput = {
   title: string;
@@ -10,54 +12,52 @@ type CreateListningInput = {
 
 type UpdateListningInput = Partial<CreateListningInput>;
 
-const listnings: Listning[] = [
-  {
-    id: 'seed-1',
-    title: 'Mysig lägenhet i centrum',
-    description:
-      'Ljus och rymlig lägenhet i hjärtat av stan med balkong och nära till kollektivtrafik.',
-    price: 1450,
-    amenities: ['Wifi', 'Kök', 'Tvättmaskin'],
-    images: [],
-    createdAt: new Date().toISOString(),
-  },
-];
+const toListning = (listning: IListning): Listning => ({
+  id: listning._id.toString(),
+  title: listning.title,
+  description: listning.description,
+  price: listning.price,
+  amenities: listning.amenities,
+  images: listning.images,
+  createdAt: listning.createdAt.toISOString(),
+});
 
-export const getListnings = () => listnings;
-
-export const createListning = (input: CreateListningInput) => {
-  const listning: Listning = {
-    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    ...input,
-    createdAt: new Date().toISOString(),
-  };
-
-  listnings.unshift(listning);
-  return listning;
+export const getListnings = async () => {
+  const listnings = await ListningModel.find().sort({ createdAt: -1 });
+  return listnings.map(toListning);
 };
 
-export const updateListning = (id: string, input: UpdateListningInput) => {
-  const listningIndex = listnings.findIndex((listning) => listning.id === id);
+export const createListning = async (input: CreateListningInput) => {
+  const listning = await ListningModel.create(input);
+  return toListning(listning);
+};
 
-  if (listningIndex === -1) {
+export const findListning = async (id: string) => {
+  if (!mongoose.isValidObjectId(id)) {
     return null;
   }
 
-  listnings[listningIndex] = {
-    ...listnings[listningIndex],
-    ...input,
-  };
-
-  return listnings[listningIndex];
+  const listning = await ListningModel.findById(id);
+  return listning ? toListning(listning) : null;
 };
 
-export const deleteListning = (id: string) => {
-  const listningIndex = listnings.findIndex((listning) => listning.id === id);
-
-  if (listningIndex === -1) {
+export const updateListning = async (id: string, input: UpdateListningInput) => {
+  if (!mongoose.isValidObjectId(id)) {
     return null;
   }
 
-  const [deletedListning] = listnings.splice(listningIndex, 1);
-  return deletedListning;
+  const listning = await ListningModel.findByIdAndUpdate(id, input, {
+    new: true,
+    runValidators: true,
+  });
+  return listning ? toListning(listning) : null;
+};
+
+export const deleteListning = async (id: string) => {
+  if (!mongoose.isValidObjectId(id)) {
+    return null;
+  }
+
+  const listning = await ListningModel.findByIdAndDelete(id);
+  return listning ? toListning(listning) : null;
 };

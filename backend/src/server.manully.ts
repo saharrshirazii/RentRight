@@ -23,7 +23,7 @@ connectToDatabase();
 
 //data base
 let users: User[] = [
-    { id: 1, name: 'Naja', email: 'Naja.chasacademy.se', role : 'admin' },
+    { id: 1, name: 'Najah', email: 'Najah.chasacademy.se', role : 'admin' },
     { id: 2, name: 'Sahar', email: 'sahar.chasacademy.se', role: 'guest' },
     { id: 3, name: 'Johanna', email: 'johanna.chasacademy.se', role: 'host' },
 ]

@@ -2,7 +2,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { Request, Response } from 'express';
-import { createListning, deleteListning, getListnings, updateListning } from '../data/listnings';
+import { createListning, deleteListning, findListning, getListnings, updateListning } from '../data/listnings';
 import { uploadDirectory } from '../config/upload';
 import { ListingImage } from '../types';
 
@@ -44,11 +44,15 @@ const parseKeepImageIds = (value: unknown) => {
   }
 };
 
-export const listListnings = (_req: Request, res: Response) => {
-  res.json(getListnings());
+export const listListnings = async (_req: Request, res: Response) => {
+  try {
+    res.json(await getListnings());
+  } catch {
+    res.status(500).json({ message: 'Kunde inte hämta annonser.' });
+  }
 };
 
-export const addListning = (req: Request, res: Response) => {
+export const addListning = async (req: Request, res: Response) => {
   const { title, description, price } = req.body;
   const numericPrice = Number(price);
 
@@ -69,15 +73,19 @@ export const addListning = (req: Request, res: Response) => {
     url: `/uploads/${file.filename}`,
   }));
 
-  const listning = createListning({
-    title: String(title).trim(),
-    description: String(description).trim(),
-    price: numericPrice,
-    amenities: parseAmenities(req.body.amenities),
-    images,
-  });
+  try {
+    const listning = await createListning({
+      title: String(title).trim(),
+      description: String(description).trim(),
+      price: numericPrice,
+      amenities: parseAmenities(req.body.amenities),
+      images,
+    });
 
-  res.status(201).json(listning);
+    res.status(201).json(listning);
+  } catch {
+    res.status(500).json({ message: 'Kunde inte skapa annonsen.' });
+  }
 };
 
 export const editListning = async (req: Request, res: Response) => {
@@ -91,7 +99,7 @@ export const editListning = async (req: Request, res: Response) => {
     return;
   }
 
-  const currentListning = getListnings().find((listning) => listning.id === req.params.id);
+  const currentListning = await findListning(req.params.id);
   if (!currentListning) {
     res.status(404).json({ message: 'Annonsen hittades inte.' });
     return;
@@ -123,19 +131,23 @@ export const editListning = async (req: Request, res: Response) => {
     }),
   );
 
-  const updatedListning = updateListning(req.params.id, {
-    title: String(title).trim(),
-    description: String(description).trim(),
-    price: numericPrice,
-    amenities: parseAmenities(req.body.amenities),
-    images,
-  });
+  try {
+    const updatedListning = await updateListning(req.params.id, {
+      title: String(title).trim(),
+      description: String(description).trim(),
+      price: numericPrice,
+      amenities: parseAmenities(req.body.amenities),
+      images,
+    });
 
-  res.json(updatedListning);
+    res.json(updatedListning);
+  } catch {
+    res.status(500).json({ message: 'Kunde inte spara annonsen.' });
+  }
 };
 
 export const removeListning = async (req: Request, res: Response) => {
-  const deletedListning = deleteListning(req.params.id);
+  const deletedListning = await deleteListning(req.params.id);
 
   if (!deletedListning) {
     res.status(404).json({ message: 'Annonsen hittades inte.' });
