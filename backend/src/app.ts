@@ -9,6 +9,7 @@ import listningRoutes from './routes/listningRoutes';
 import { uploadDirectory } from './config/upload';
 import userRouter from './routes/users';
 import authRoutes from './routes/auth';
+import messageRoutes from './routes/messageRoutes';
 
 const app: Application = express();
 
@@ -29,6 +30,7 @@ app.use('/api/v1/properties', propertyRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/listnings', listningRoutes);
+app.use('/api/v1/messages', messageRoutes);
 
 
 app.get('/', (req: Request, res: Response) => {
