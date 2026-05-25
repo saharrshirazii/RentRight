@@ -17,8 +17,35 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordStatus, setPasswordStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  
+  //States och useEffect för meddelanden
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [messageLoading, setMessageLoading] = useState(true);
 
-  // Byta roll (Host / Guest) - HELT ÅTERSTÄLLD OCH UTGÅR FRÅN DINA PROPS!
+  useEffect(()=>{
+    const fetchInbox = async () => {
+      try{
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://localhost:3000/api/v1/messages/inbox", {
+          headers: {"Authorization": `Bearer ${token}`}
+        });
+
+        if(response.ok){
+          const resData = await response.json();
+          setConversations(resData.data || []);
+        }
+      }catch(error){
+        console.error("Fel vid hämtning av meddelanden", error);
+      }
+      finally{
+        setMessageLoading(false);
+      }
+    };
+    fetchInbox();
+  }, []);
+
+
+  // Byta roll (Host / Guest) 
   const handleSwitchRole = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -236,10 +263,32 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
         <main className="flex-1 space-y-20 md:space-y-32 pb-40">
           <section id="messages" className="scroll-mt-40 md:scroll-mt-32">
             <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Meddelanden</h3>
-            <div className="py-12 md:aspect-[16/5] border-2 border-dashed border-gray-100 rounded-[2rem] flex flex-col items-center justify-center text-gray-400">
-              <HiMail className="text-4xl mb-2 opacity-20" />
-              <p className="text-sm">Inga meddelanden</p>
-            </div>
+            
+            {messageLoading ? (
+              <p className="text-sm text-gray-400 animate-pulse">Laddar konversationer...</p>
+            ) : conversations.length === 0 ? (
+              <div className="py-12 md:aspect-[16/5] border-2 border-dashed border-gray-100 rounded-[2rem] flex flex-col items-center justify-center text-gray-400">
+                <HiMail className="text-4xl mb-2 opacity-20" />
+                <p className="text-sm">Inga meddelanden</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {conversations.map((chat) => (
+                  <div 
+                    key={chat.user} 
+                    className="p-6 border border-gray-100 rounded-[1.5rem] hover:shadow-lg transition-all flex justify-between items-center bg-white cursor-pointer"
+                  >
+                    <div>
+                      <p className="text-sm font-bold text-gray-900 mb-1">Konversation (ID: {chat.user.substring(0, 6)}...)</p>
+                      <p className="text-gray-500 text-sm">{chat.lastMessage}</p>
+                    </div>
+                    <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
+                      {new Date(chat.date).toLocaleDateString('sv-SE')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           <section id="favorites" className="scroll-mt-40 md:scroll-mt-32">
