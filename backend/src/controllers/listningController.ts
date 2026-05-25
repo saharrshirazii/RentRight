@@ -47,33 +47,34 @@ const parseKeepImageIds = (value: unknown) => {
 export const listListnings = async (_req: Request, res: Response) => {
   try {
     res.json(await getListnings());
-  } catch {
+  } catch (error) {
+    console.error('Fel vid hämtning av annonser:', error);
     res.status(500).json({ message: 'Kunde inte hämta annonser.' });
   }
 };
 
 export const addListning = async (req: Request, res: Response) => {
-  const { title, description, price } = req.body;
-  const numericPrice = Number(price);
-
-  if (!title || !description || !Number.isFinite(numericPrice) || numericPrice <= 0) {
-    res.status(400).json({
-      message: 'Titel, beskrivning och ett pris större än 0 krävs.',
-    });
-    return;
-  }
-
-  const files = (req.files ?? []) as Express.Multer.File[];
-  const images: ListingImage[] = files.map((file) => ({
-    id: file.filename,
-    originalName: file.originalname,
-    filename: file.filename,
-    mimetype: file.mimetype,
-    size: file.size,
-    url: `/uploads/${file.filename}`,
-  }));
-
   try {
+    const { title, description, price } = req.body;
+    const numericPrice = Number(price);
+
+    if (!title || !description || !Number.isFinite(numericPrice) || numericPrice <= 0) {
+      res.status(400).json({
+        message: 'Titel, beskrivning och ett pris större än 0 krävs.',
+      });
+      return;
+    }
+
+    const files = (req.files ?? []) as Express.Multer.File[];
+    const images: ListingImage[] = files.map((file) => ({
+      id: file.filename,
+      originalName: file.originalname,
+      filename: file.filename,
+      mimetype: file.mimetype,
+      size: file.size,
+      url: `/uploads/${file.filename}`,
+    }));
+
     const listning = await createListning({
       title: String(title).trim(),
       description: String(description).trim(),
@@ -83,55 +84,56 @@ export const addListning = async (req: Request, res: Response) => {
     });
 
     res.status(201).json(listning);
-  } catch {
+  } catch (error) {
+    console.error('Fel vid skapande av annons:', error);
     res.status(500).json({ message: 'Kunde inte skapa annonsen.' });
   }
 };
 
 export const editListning = async (req: Request, res: Response) => {
-  const { title, description, price } = req.body;
-  const numericPrice = Number(price);
-
-  if (!title || !description || !Number.isFinite(numericPrice) || numericPrice <= 0) {
-    res.status(400).json({
-      message: 'Titel, beskrivning och ett pris större än 0 krävs.',
-    });
-    return;
-  }
-
-  const currentListning = await findListning(req.params.id);
-  if (!currentListning) {
-    res.status(404).json({ message: 'Annonsen hittades inte.' });
-    return;
-  }
-
-  const files = (req.files ?? []) as Express.Multer.File[];
-  const uploadedImages: ListingImage[] = files.map((file) => ({
-    id: file.filename,
-    originalName: file.originalname,
-    filename: file.filename,
-    mimetype: file.mimetype,
-    size: file.size,
-    url: `/uploads/${file.filename}`,
-  }));
-
-  const keepImageIds = parseKeepImageIds(req.body.keepImageIds);
-  const keptImages = keepImageIds
-    ? currentListning.images.filter((image) => keepImageIds.includes(image.id))
-    : currentListning.images;
-  const removedImages = currentListning.images.filter(
-    (image) => !keptImages.some((keptImage) => keptImage.id === image.id),
-  );
-  const images = [...keptImages, ...uploadedImages];
-
-  await Promise.all(
-    removedImages.map(async (image) => {
-      const imagePath = path.join(uploadDirectory, image.filename);
-      await fs.unlink(imagePath).catch(() => undefined);
-    }),
-  );
-
   try {
+    const { title, description, price } = req.body;
+    const numericPrice = Number(price);
+
+    if (!title || !description || !Number.isFinite(numericPrice) || numericPrice <= 0) {
+      res.status(400).json({
+        message: 'Titel, beskrivning och ett pris större än 0 krävs.',
+      });
+      return;
+    }
+
+    const currentListning = await findListning(req.params.id);
+    if (!currentListning) {
+      res.status(404).json({ message: 'Annonsen hittades inte.' });
+      return;
+    }
+
+    const files = (req.files ?? []) as Express.Multer.File[];
+    const uploadedImages: ListingImage[] = files.map((file) => ({
+      id: file.filename,
+      originalName: file.originalname,
+      filename: file.filename,
+      mimetype: file.mimetype,
+      size: file.size,
+      url: `/uploads/${file.filename}`,
+    }));
+
+    const keepImageIds = parseKeepImageIds(req.body.keepImageIds);
+    const keptImages = keepImageIds
+      ? currentListning.images.filter((image) => keepImageIds.includes(image.id))
+      : currentListning.images;
+    const removedImages = currentListning.images.filter(
+      (image) => !keptImages.some((keptImage) => keptImage.id === image.id),
+    );
+    const images = [...keptImages, ...uploadedImages];
+
+    await Promise.all(
+      removedImages.map(async (image) => {
+        const imagePath = path.join(uploadDirectory, image.filename);
+        await fs.unlink(imagePath).catch(() => undefined);
+      }),
+    );
+
     const updatedListning = await updateListning(req.params.id, {
       title: String(title).trim(),
       description: String(description).trim(),
@@ -141,25 +143,36 @@ export const editListning = async (req: Request, res: Response) => {
     });
 
     res.json(updatedListning);
-  } catch {
+  } catch (error) {
+    console.error('Fel vid uppdatering av annons:', error);
     res.status(500).json({ message: 'Kunde inte spara annonsen.' });
   }
 };
 
 export const removeListning = async (req: Request, res: Response) => {
-  const deletedListning = await deleteListning(req.params.id);
+  try {
+    const deletedListning = await deleteListning(req.params.id);
 
-  if (!deletedListning) {
-    res.status(404).json({ message: 'Annonsen hittades inte.' });
-    return;
+    if (!deletedListning) {
+      res.status(404).json({ message: 'Annonsen hittades inte.' });
+      return;
+    }
+
+    // Ta bort bilderna från disk (hårddisken)
+    await Promise.all(
+      deletedListning.images.map(async (image) => {
+        const imagePath = path.join(uploadDirectory, image.filename);
+        await fs.unlink(imagePath).catch(() => undefined);
+      }),
+    );
+
+    // raderar rätt kort på frontenden
+    res.status(200).json({ 
+      message: 'Annonsen raderades framgångsrikt.', 
+      id: req.params.id 
+    });
+  } catch (error) {
+    console.error('Fel vid radering av annons:', error);
+    res.status(500).json({ message: 'Ett internt fel uppstod vid radering.' });
   }
-
-  await Promise.all(
-    deletedListning.images.map(async (image) => {
-      const imagePath = path.join(uploadDirectory, image.filename);
-      await fs.unlink(imagePath).catch(() => undefined);
-    }),
-  );
-
-  res.status(204).send();
 };

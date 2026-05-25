@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Listing, ListingImage } from "../../../types/listingtypes";
 
-// Konstanter som komponenten behöver
-const API_BASE_URL = "http://localhost:3002";
+
+const API_BASE_URL = "http://localhost:3000";
 const defaultAmenities = ["Wifi", "Kök", "Tvättmaskin", "Parkering", "Balkong", "Husdjur tillåtna"];
 
 type ListingFormProps = {
@@ -63,6 +63,13 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
     );
   };
 
+  
+  const removeAmenity = (amenityToRemove: string) => {
+    setSelectedAmenities((currentAmenities) =>
+      currentAmenities.filter((amenity) => amenity !== amenityToRemove)
+    );
+  };
+
   const addCustomAmenity = () => {
     const trimmedAmenity = customAmenity.trim();
     if (!trimmedAmenity || selectedAmenities.includes(trimmedAmenity)) return;
@@ -95,6 +102,7 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
 
     try {
       const token = localStorage.getItem("token");
+      // ANVÄNDER /listnings HÄR IGEN
       const response = await fetch(
         isEditing && listing
           ? `${API_BASE_URL}/api/v1/listnings/${listing.id}`
@@ -212,15 +220,49 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
         </button>
       </div>
 
+      {/* Bekvämlighets-taggar med fungerande raderingskryss (×) */}
       {selectedAmenities.length > 0 ? (
-        <div className="listing-card__meta">
+        <div className="listing-card__meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
           {selectedAmenities.map((amenity) => (
-            <span key={amenity}>{amenity}</span>
+            <span 
+              key={amenity} 
+              style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '6px', 
+                padding: '6px 12px', 
+                backgroundColor: '#f3f4f6', 
+                borderRadius: '9999px',
+                fontSize: '14px',
+                color: '#374151'
+              }}
+            >
+              {amenity}
+              <button
+                type="button"
+                onClick={() => removeAmenity(amenity)}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  color: '#9ca3af',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  padding: '0 2px',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#9ca3af')}
+              >
+                ×
+              </button>
+            </span>
           ))}
         </div>
       ) : null}
 
-      {error ? <p className="form-error">{error}</p> : null}
+      {error ? <p className="form-error" style={{ color: '#ef4444', fontWeight: '500', marginTop: '12px' }}>{error}</p> : null}
 
       <div className="form-actions">
         <button type="button" className="ghost-button" onClick={onCancel}>
