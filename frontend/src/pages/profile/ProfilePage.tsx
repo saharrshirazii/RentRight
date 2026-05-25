@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HiUser, HiMail, HiHeart, HiLockClosed, HiLogout, HiSwitchHorizontal } from 'react-icons/hi';
-import Navbar from '../../components/Navbar/Navbar';
+import { useNavigate } from 'react-router-dom';
 
 interface ProfilePageProps {
   setExperience: (exp: "explore" | "host" | "profile") => void;
@@ -9,6 +9,7 @@ interface ProfilePageProps {
 }
 
 const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps) => {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('messages');
   
   // States för lösenordsbytet
@@ -65,15 +66,18 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
     }
 
     const data = await response.json(); 
-    console.log("Data från IUser-modell:", data);
 
+    // Skapa det uppdaterade användarobjektet med den nya rollen från backend
     const updatedUser = { 
       ...userData, 
       role: data.role 
     };
 
+    // Spara i localStorage och uppdatera statet i App.tsx
     localStorage.setItem("user", JSON.stringify(updatedUser));
     setUserData(updatedUser); 
+
+  
   };
 
   // Skicka nytt lösenord till backend
@@ -189,7 +193,7 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar setExperience={setExperience} />
+      
 
       {/* --- HEADER --- */}
       <header className="max-w-7xl mx-auto px-6 md:px-16 lg:px-24 pt-10 md:pt-16 pb-6 md:pb-10 border-b border-gray-100">
@@ -251,10 +255,23 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
                 <HiSwitchHorizontal className="text-xl" />
                 <span className="text-sm font-medium">Växla läge</span>
               </button>
-              <button onClick={() => { localStorage.removeItem('token'); window.location.reload(); }} className="flex items-center gap-4 hover:text-red-600 transition-colors w-full text-left">
-                <HiLogout className="text-xl" />
-                <span className="text-sm font-medium">Logga ut</span>
-              </button>
+              {/* ÄNDRA TILL DETTA: */}
+<button 
+  onClick={() => { 
+    // 1. Tömmer webbläsarens minne på token och user-data
+    localStorage.clear(); 
+    
+    // 2. Nollställer statet i App.tsx så navbaren fattar att du är utloggad
+    setUserData(null);    
+    
+    // 3. Skickar dig till startsidan och rensar bort "?tab=settings" helt från URL-raden
+    window.location.href = '/'; 
+  }} 
+  className="flex items-center gap-4 hover:text-red-600 transition-colors w-full text-left"
+>
+  <HiLogout className="text-xl" />
+  <span className="text-sm font-medium">Logga ut</span>
+</button>
             </div>
           </nav>
         </aside>

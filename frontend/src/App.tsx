@@ -1,23 +1,71 @@
 // import { useEffect, useState } from "react";
-import React from "react";
+import React, { useState } from "react";
 import Navbar from "./components/Navbar/Navbar";
 import PropertyGrid from "./components/PropertyGrid/PropertyGrid";
 import Footer from "./components/Footer/Footer";
-import { Routes, Route } from 'react-router-dom';
-import { PropertyDetail } from "./components/PropertyDetail/PropertyDetail"
-import BookingConfirmation from './components/BookingConfirmation/BookingConfirmation'
+import { Routes, Route, useNavigate } from 'react-router-dom'; 
+import { PropertyDetail } from "./components/PropertyDetail/PropertyDetail";
+import BookingConfirmation from './components/BookingConfirmation/BookingConfirmation';
+import ProfilePage from "./pages/profile/ProfilePage";
 
 //SAHAR
 const App: React.FC = () => {
+  const navigate = useNavigate(); // 2. LÄGG TILL DENNA RAD HÄR
+
+  //Johanna för att rendera profilepage
+  const [userData, setUserData] = useState<any>(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        return JSON.parse(savedUser);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
 
   return (
-
     <div className="min-h-screen bg-white">
-      <Navbar />
+      <Navbar userData={userData} setUserData={setUserData} setExperience={() => {}} />
       <Routes>
-        <Route path="/" element={<PropertyGrid />} />
+        
+        {/* 3. DETTA ÄR RUTTEN VI HAR ERSATT FÖR STARTSIDAN: */}
+        <Route 
+          path="/" 
+          element={
+            <main>
+              <div className="explore-host-switch" style={{ display: 'flex', gap: '10px', padding: '10px 20px' }}>
+                {userData?.role === 'host' && (
+                  <button 
+                    type="button" 
+                    className="primary-button" 
+                    onClick={() => navigate('/host')} // Skickar användaren till er värd-sida
+                  >
+                    Mina boenden
+                  </button>
+                )}
+              </div>
+              <PropertyGrid />
+            </main>
+          } 
+        />
+
         <Route path="/properties/:id" element={<PropertyDetail />} />
         <Route path="/properties/:id/booking" element={<BookingConfirmation />} />
+        <Route 
+          path="/profile" 
+          element={
+            <ProfilePage 
+              setExperience={() => {}} 
+              userData={userData} 
+              setUserData={setUserData} 
+            />
+          } 
+        />
+        
+        <Route path="/host" element={<div className="p-20 text-center text-xl font-bold text-gray-600">Här hamnar man på Mina Boenden!</div>} />
+        
         <Route path="*" element={<div>Sidan hittades inte (404)</div>} />
       </Routes>
       <Footer />
@@ -25,7 +73,7 @@ const App: React.FC = () => {
   );
 }
 
-export default App
+export default App;
 
 
 
