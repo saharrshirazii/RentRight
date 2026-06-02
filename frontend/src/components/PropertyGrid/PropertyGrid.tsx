@@ -8,6 +8,7 @@ import { getProperties } from '../../api/propertyApi';
 import FilterSection from '../FilterSection/FilterSection';
 import Hero from '../Hero/Hero';
 import { HeroSearchBar } from '../HeroSearchBar/HeroSearchBar';
+import { HiHeart, HiOutlineHeart } from 'react-icons/hi';
 
 export default function PropertyGrid() {
   const { search } = useLocation(); 
@@ -127,9 +128,65 @@ export default function PropertyGrid() {
 
 
 const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
+  const [isFavorite, setIsFavorite] = useState(false);
+
   const imageUrl = property.images?.[0]
     ? `http://localhost:3000/assets/${property.images[0]}`
     : 'https://via.placeholder.com/400';
+
+    useEffect(() => {
+      const checkFavoriteStatus = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) return; 
+
+          const response = await fetch(`http://localhost:3000/api/v1/favorites/check/${property._id}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if(response.ok){
+          const data = await response.json();
+          setIsFavorite(data.isFavorite);
+        }
+        } catch(error){
+          console.error("Kunde inte kontroller favoritstatus", error);
+        }
+        };
+        checkFavoriteStatus();
+      }, [property._id]);
+
+      const handleFavoriteClick = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const token = localStorage.getItem("token");
+        if(!token){
+          alert("Du måste vara inloggad för att kunna spara favoriter");
+          return;
+        }
+
+        const method = isFavorite? "DELETE" : "POST";
+        const url = isFavorite
+        ? `http://localhost:3000/api/v1/favorites/${property._id}` 
+        : `http://localhost:3000/api/v1/favorites`;
+
+        try{
+          const response = await fetch(url, {
+            method: method, 
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }, 
+            body: !isFavorite ? JSON.stringify({ propertyId: property._id }) : undefined
+          });
+
+          if(response.ok){
+            setIsFavorite(!isFavorite);
+          }
+        }catch(error){
+          console.error("Nätverksfel vid favoritmarkering", error);
+        }
+      };
 
   return (
     <div className="flex flex-col h-full group cursor-pointer bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300">
@@ -170,11 +227,25 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           </div>
         </div>
 
-        <div className="mt-4 flex items-baseline gap-1">
+      <div className='mt-4 flex justify-between items-center'>
+        <div className="flex items-baseline gap-1">
           <span className="text-l font-black text-gray-900">{property.pricePerNight} kr</span>
           <span className="text-gray-500 text-sm">/ natt</span>
         </div>
+
+        <button
+          onClick={handleFavoriteClick}
+          className="p-2 rounded-full border border-gray-100 text-gray-400 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50/30 transition-all duration-200 cursor-pointer"
+            title={isFavorite ? "Ta bort från sparade" : "Spara boende"}
+        >
+          {isFavorite ? (
+              <HiHeart className="text-xl text-rose-500" />
+            ) : (
+              <HiOutlineHeart className="text-xl" />
+            )}
+        </button>
       </div>
+    </div>
     </div>
   );
 };
