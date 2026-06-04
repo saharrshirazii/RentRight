@@ -1,8 +1,7 @@
 import { useState } from "react";
 import Card from "../../components/Card/Card";
 import Button from "../../components/Button/Button";
-import { useNavigate } from 'react-router-dom'
-import { IoMapSharp } from "react-icons/io5";
+import { useNavigate } from 'react-router-dom';
 
 interface LoginProps {
   onToggle: () => void;
@@ -12,8 +11,10 @@ function LogIn({ onToggle }: LoginProps) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(""); // Ändrat från alert till state
 
   const handleLogin = async () => {
+    setError(""); // Rensa tidigare fel
     try {
       const response = await fetch("http://localhost:3000/api/v1/auth/login", {
         method: "POST",
@@ -24,19 +25,17 @@ function LogIn({ onToggle }: LoginProps) {
       const data = await response.json();
 
       if (response.ok) {
-        // Spara token och användarinfo
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        
-        alert("Inloggad! Välkommen " + data.user.name);
         navigate("/");
-        window.location.reload(); // Ladda om sidan för att uppdatera navbaren
+        window.location.reload();
       } else {
-        alert(data.message || "Inloggningen misslyckades");
+        // Hantera både specifika Zod-fel och generella felmeddelanden
+        const msg = data.errorList ? data.errorList[0] : (data.message || "Inloggningen misslyckades");
+        setError(msg);
       }
     } catch (error) {
-      console.error("Fel vid inloggning:", error);
-      alert("Kunde inte ansluta till servern");
+      setError("Kunde inte ansluta till servern");
     }
   };
 
@@ -49,40 +48,28 @@ function LogIn({ onToggle }: LoginProps) {
             <p className="text-base text-gray-600 font-medium tracking-tight">Logga in på ditt RentRight-konto</p>
           </div>
 
+          {/* Felmeddelande-box */}
+          {error && (
+            <div className="p-3 mb-6 text-sm font-semibold text-red-600 bg-red-50 rounded-xl border border-red-100 text-center">
+              {error}
+            </div>
+          )}
+
           <div className="flex flex-col gap-8">
+            {/* Input-fälten förblir samma som du hade */}
             <div className="relative group">
-              <input
-                type="email"
-                id="email"
-                value={email}
-                placeholder=" "
-                onChange={(e) => setEmail(e.target.value)}
-                className="peer w-full px-0 py-3 text-lg text-gray-950 bg-transparent border-b-2 border-gray-200 placeholder-transparent focus:border-indigo-600 focus:outline-none transition-all duration-300 ease-out"
-              />
-              <label htmlFor="email" className="absolute left-0 -top-1 text-sm text-gray-600 font-medium transition-all duration-300 ease-out pointer-events-none peer-placeholder-shown:text-lg peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-1 peer-focus:text-sm peer-focus:text-indigo-600 peer-focus:font-semibold">
-                E-post
-              </label>
+              <input type="email" id="email" value={email} placeholder=" " onChange={(e) => setEmail(e.target.value)} className="peer w-full px-0 py-3 text-lg text-gray-950 bg-transparent border-b-2 border-gray-200 placeholder-transparent focus:border-indigo-600 focus:outline-none transition-all duration-300 ease-out" />
+              <label htmlFor="email" className="absolute left-0 -top-1 text-sm text-gray-600 font-medium transition-all duration-300 ease-out pointer-events-none peer-placeholder-shown:text-lg peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-1 peer-focus:text-sm peer-focus:text-indigo-600 peer-focus:font-semibold">E-post</label>
             </div>
 
             <div className="relative group">
-              <input
-                type="password"
-                id="password"
-                value={password}
-                placeholder=" "
-                onChange={(e) => setPassword(e.target.value)}
-                className="peer w-full px-0 py-3 text-lg text-gray-950 bg-transparent border-b-2 border-gray-200 placeholder-transparent focus:border-indigo-600 focus:outline-none transition-all duration-300 ease-out"
-              />
-              <label htmlFor="password" className="absolute left-0 -top-1 text-sm text-gray-600 font-medium transition-all duration-300 ease-out pointer-events-none peer-placeholder-shown:text-lg peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-1 peer-focus:text-sm peer-focus:text-indigo-600 peer-focus:font-semibold">
-                Lösenord
-              </label>
+              <input type="password" id="password" value={password} placeholder=" " onChange={(e) => setPassword(e.target.value)} className="peer w-full px-0 py-3 text-lg text-gray-950 bg-transparent border-b-2 border-gray-200 placeholder-transparent focus:border-indigo-600 focus:outline-none transition-all duration-300 ease-out" />
+              <label htmlFor="password" className="absolute left-0 -top-1 text-sm text-gray-600 font-medium transition-all duration-300 ease-out pointer-events-none peer-placeholder-shown:text-lg peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-1 peer-focus:text-sm peer-focus:text-indigo-600 peer-focus:font-semibold">Lösenord</label>
             </div>
 
-            <div className="mt-4">
-              <Button onClick={handleLogin} className="w-full py-4 text-base font-semibold text-white bg-gray-950 rounded-full hover:bg-indigo-700 transition-all duration-300 shadow-[0_4px_14px_rgba(0,0,0,0.15)] active:scale-[0.98]">
-                Logga in
-              </Button>
-            </div>
+            <Button onClick={handleLogin} className="w-full py-4 text-base font-semibold text-white bg-gray-950 rounded-full hover:bg-indigo-700 transition-all duration-300 shadow-[0_4px_14px_rgba(0,0,0,0.15)] active:scale-[0.98]">
+              Logga in
+            </Button>
 
             <p className="text-center text-sm text-gray-600 mt-2 font-medium">
               Är du ny här? {" "}
