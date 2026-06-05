@@ -28,7 +28,7 @@ export const HeroSearchBar: React.FC = () => {
         }
 
         const params = new URLSearchParams();
-        if (location.trim()) params.append('location', location.trim());
+        if (location.trim()) params.append('location', location.trim().toLocaleLowerCase());
         if (guests) params.append('guests', guests.toString());
         if (checkIn) params.append('checkIn', checkIn);
         if (checkOut) params.append('checkOut', checkOut);

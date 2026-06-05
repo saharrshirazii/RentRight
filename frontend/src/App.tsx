@@ -6,6 +6,9 @@ import Footer from "./components/Footer/Footer";
 import { Routes, Route } from 'react-router-dom';
 import { PropertyDetail } from "./components/PropertyDetail/PropertyDetail"
 import BookingConfirmation from './components/BookingConfirmation/BookingConfirmation'
+import { MyBookings } from "./components/guest/MyBookings/MyBookings";
+import { CheckoutPage } from "./components/guest/MyBookings/CheckoutPage";
+import Login from "./pages/auth/Login"
 
 //SAHAR
 const App: React.FC = () => {
@@ -18,6 +21,12 @@ const App: React.FC = () => {
         <Route path="/" element={<PropertyGrid />} />
         <Route path="/properties/:id" element={<PropertyDetail />} />
         <Route path="/properties/:id/booking" element={<BookingConfirmation />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/properties/:id/checkout" element={<CheckoutPage />} />
+        <Route path="/login" element={<Login/>}/>
+
+        
+
         <Route path="*" element={<div>Sidan hittades inte (404)</div>} />
       </Routes>
       <Footer />
