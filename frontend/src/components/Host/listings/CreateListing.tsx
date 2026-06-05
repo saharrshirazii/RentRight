@@ -28,7 +28,7 @@ const CreateListing: React.FC = () => {
           <button onClick={handleRemoveFile}>Radera bild</button>
         </div>
       )}
-      {/* Lägg till övriga fält för annonsen här */}
+      
     </div>
   );
 };

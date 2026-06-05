@@ -6,7 +6,6 @@ import { IoIosArrowForward } from "react-icons/io";
 import { SlBasket } from "react-icons/sl";
 import {useNavigate} from 'react-router-dom';
 
-
 // 1. Lagt till interface för att TypeScript ska förstå setExperience
 interface NavbarProps {
   setExperience: (exp: "explore" | "host" | "profile") => void;
@@ -15,6 +14,7 @@ interface NavbarProps {
 }
 
 const Navbar = ({ setExperience, userData, setUserData } : NavbarProps) => {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLoginView, setIsLoginView] = useState(true);
@@ -36,11 +36,10 @@ const Navbar = ({ setExperience, userData, setUserData } : NavbarProps) => {
   };
 
   // 2. Hjälpfunktion för att navigera till profilens olika flikar
-  const handleNav = (tab: string) => {
-    setExperience("profile");
-    window.history.pushState({}, '', `/profile?tab=${tab}`);
-    setIsProfileOpen(false);
-  };
+const handleNav = (tab: string) => {
+  navigate(`/profile?tab=${tab}`); // Säger till React Router att byta sida på riktigt!
+  setIsProfileOpen(false); // Stänger dropdown-menyn
+};
 
   const userStore = localStorage.getItem('user');
   const showUser = userStore ? JSON.parse(userStore) : null;
@@ -81,11 +80,11 @@ const Navbar = ({ setExperience, userData, setUserData } : NavbarProps) => {
     <>
       <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white sticky top-0 z-50 transition-all">
         {/* Logo */}
-        <a href="/" onClick={(e) => { e.preventDefault(); setExperience("explore"); window.history.pushState({}, '', '/'); }}>
-          <h1 className="text-2xl font-bold text-indigo-600 tracking-tight">
-            RentRight
-          </h1>
-        </a>
+<a href="/" onClick={(e) => { e.preventDefault(); navigate('/'); }}>
+  <h1 className="text-2xl font-bold text-indigo-600 tracking-tight">
+    RentRight
+  </h1>
+</a>
 
         {/* Mobile Menu Toggle Button */}
         <button
@@ -211,7 +210,7 @@ const Navbar = ({ setExperience, userData, setUserData } : NavbarProps) => {
       {/* Auth Modal */}
       {isLoginOpen && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-md"
           onClick={() => setIsLoginOpen(false)}
         >
           <div 

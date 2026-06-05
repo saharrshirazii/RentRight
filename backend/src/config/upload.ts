@@ -1,4 +1,4 @@
-// Multer config för bilder
+
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
@@ -22,8 +22,8 @@ const storage = multer.diskStorage({
 export const upload = multer({
   storage,
   limits: {
-    files: 8,
-    fileSize: 5 * 1024 * 1024,
+    files: 12,                  
+    fileSize: 25 * 1024 * 1024, 
   },
   fileFilter: (_req, file, cb) => {
     if (!file.mimetype.startsWith('image/')) {

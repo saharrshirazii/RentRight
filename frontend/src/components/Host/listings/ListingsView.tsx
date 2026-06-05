@@ -1,6 +1,6 @@
 import { Listing } from "../../../types/listingtypes";
 
-const API_BASE_URL = "http://localhost:3002";
+const API_BASE_URL = "http://localhost:3000";
 
 type ListingsViewProps = {
   deletingListingId: string;
@@ -51,14 +51,20 @@ export default function ListingsView({
   return (
     <div className="stack">
       {listings.map((listing) => {
-        const firstImage = listing.images[0];
+        
+        const currentListingId = listing.id || (listing as any)._id;
+        const firstImage = listing.images && listing.images[0];
 
         return (
-          <article key={listing.id} className="listing-card">
+          <article key={currentListingId} className="listing-card">
             <div className="listing-card__image">
               {firstImage ? (
                 <img 
-                  src={`${API_BASE_URL}${firstImage.url}`} 
+                  src={
+                    firstImage.url.startsWith('http') 
+                      ? firstImage.url 
+                      : `${API_BASE_URL}${firstImage.url}`
+                  } 
                   alt={listing.title}
                   style={{
                     width: '100%',
@@ -67,7 +73,20 @@ export default function ListingsView({
                     borderRadius: '12px'
                   }}
                 />
-              ) : null}
+              ) : (
+                <div style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  backgroundColor: '#f3f4f6', 
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#9ca3af'
+                }}>
+                  Ingen bild uppladdad
+                </div>
+              )}
             </div>
 
             <div className="listing-card__body">
@@ -78,7 +97,7 @@ export default function ListingsView({
                     <span className="listing-badge">Annons</span>
                   </div>
                   <p className="listing-card__location">
-                    {listing.images.length} bilder uppladdade
+                    {listing.images ? listing.images.length : 0} bilder uppladdade
                   </p>
                 </div>
 
@@ -88,7 +107,7 @@ export default function ListingsView({
               <p className="listing-card__description">{listing.description}</p>
 
               <div className="listing-card__meta">
-                {listing.amenities.map((item) => (
+                {listing.amenities && listing.amenities.map((item) => (
                   <span key={item}>{item}</span>
                 ))}
               </div>
@@ -103,10 +122,11 @@ export default function ListingsView({
                 <button
                   type="button"
                   className="ghost-button ghost-button--danger"
-                  disabled={deletingListingId === listing.id}
-                  onClick={() => onDelete(listing.id)}
+                 
+                  disabled={deletingListingId === currentListingId}
+                  onClick={() => onDelete(currentListingId)}
                 >
-                  {deletingListingId === listing.id ? "Tar bort..." : "Ta bort"}
+                  {deletingListingId === currentListingId ? "Tar bort..." : "Ta bort"}
                 </button>
               </div>
             </div>

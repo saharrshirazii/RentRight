@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Listing } from "../../../types/listingtypes";
 
-const API_BASE_URL = "http://localhost:3002";
+const API_BASE_URL = "http://localhost:3000";
 
 type ListingPreviewModalProps = {
   listing: Listing;
