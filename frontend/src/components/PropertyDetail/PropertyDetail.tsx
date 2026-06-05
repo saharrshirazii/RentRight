@@ -25,6 +25,31 @@ export const PropertyDetail: React.FC = () => {
   //to track the currently displayed large image
   const [activeImage, setActiveImage] = useState<string>('');
 
+  //To read user context dynamically from localStorage
+  const loggedInUserStr = localStorage.getItem('user');
+  const currentUser = loggedInUserStr ? JSON.parse(loggedInUserStr) : {
+      name: "Sahar Shiraz", // Fallback name
+      role: "admin"        // Fallback role: 'gäst' | 'värd' | 'admin'
+  };
+
+  // Determine whose profile to actually present
+  // If a user is logged in, show their info otherwise, fall back to the property owner's info
+  const displayName = currentUser?.name || property?.owner?.name || 'Anonym Användare';
+  const displayRole = currentUser?.role || property?.owner?.role || 'gäst';
+
+  // Helper function to dynamically style badges based on role types
+  const getRoleBadgeClasses = (role: string) => {
+    switch (role?.toLowerCase()) {
+      case 'admin':
+        return 'bg-indigo-50 text-indigo-700 border-indigo-100';
+      case 'värd':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+      case 'gäst':
+      default:
+        return 'bg-gray-50 text-gray-600 border-gray-200';
+    }
+  };
+
   //go to the booking page
   const handleProceedToBooking = () => {
     navigate(`/properties/${id}/booking`, {
@@ -180,10 +205,14 @@ export const PropertyDetail: React.FC = () => {
                 {property.owner?.name?.[0] || 'V'}
               </div>
               <div>
-                <p className="text-xs text-gray-600">Värd</p>
-                <h3 className="text-sm font-semibold text-gray-900">{property.owner?.name || 'Anonym Värd'}</h3>
+                {/* <p className="text-xs text-gray-600">Värd</p> */}
+                {/* <h3 className="text-sm font-semibold text-gray-900">{property.owner?.name || 'Anonym Värd'}</h3> */}
+                <h3 className="text-sm font-semibold text-gray-900">
+  {currentUser?.name || property.owner?.name || 'Anonym Användare'}
+</h3>
               </div>
             </div>
+            
 
             {/* Micro Details (Om boendet) */}
             <div>
@@ -301,5 +330,6 @@ export const PropertyDetail: React.FC = () => {
         </div>
       </div>
     </div>
+    
   );
 }

@@ -5,6 +5,11 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import Navbar from "./components/Navbar/Navbar";
 import PropertyGrid from "./components/PropertyGrid/PropertyGrid";
 import Footer from "./components/Footer/Footer";
+import { PropertyDetail } from "./components/PropertyDetail/PropertyDetail"
+import BookingConfirmation from './components/BookingConfirmation/BookingConfirmation'
+import { MyBookings } from "./components/guest/MyBookings/MyBookings";
+import { CheckoutPage } from "./components/guest/MyBookings/CheckoutPage";
+import Login from "./pages/auth/Login"
 import { PropertyDetail } from "./components/PropertyDetail/PropertyDetail";
 import BookingConfirmation from './components/BookingConfirmation/BookingConfirmation';
 import ProfilePage from "./pages/profile/ProfilePage";
@@ -214,6 +219,11 @@ const App: React.FC = () => {
 
         <Route path="/properties/:id" element={<PropertyDetail />} />
         <Route path="/properties/:id/booking" element={<BookingConfirmation />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/properties/:id/checkout" element={<CheckoutPage />} />
+        <Route path="/login" element={<Login/>}/>
+
+        
         
         <Route 
           path="/profile" 
