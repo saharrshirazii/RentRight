@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import {NotFoundError , ValidationError} from '../errors/AppError'
 import mongoose from 'mongoose'
-import Property from '../models/Property';
+import Property from '../models/property';
 import Booking from '../models/Booking'
 
 
@@ -53,13 +53,13 @@ export const getProperties = async (req: Request, res: Response, next: NextFunct
             if (searchStart >= searchEnd){
                 filter._id = new mongoose.Types.ObjectId();
             }else {
-                const overlappingBookings = await booking.find({
-                    status : {$ne : 'cancelled'},
+                const overlappingBookings = await Booking.find({
+                    status : {$ne : 'canceled'},
                     startDate: {$lt : searchEnd},
                     endDate: {$gt : searchStart}
                 }).select('propertyId');
 
-                const busyPropertyIds = overlappingBookings.map(b => b.PropertyId);
+                const busyPropertyIds = overlappingBookings.map((b: any) => b.PropertyId);
 
                 filter._id = {$nin: busyPropertyIds};
             }

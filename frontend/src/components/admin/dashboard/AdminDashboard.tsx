@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminTabPending } from '../listings/AdminTabPending';
 import { AdminTabUsers } from './AdminTabUsers';
 import { AdminTabProperties } from './AdminTabProperties';
 import { AdminTabBookings } from './AdminTabBookings';
+import { Listing } from '../../../types/listingtypes';
 
-// 1. Definiera ett interface för props så TypeScript vet att setExperience finns
+
 interface AdminDashboardProps {
   setExperience: (exp: "host" | "explore" | "profile" | "admin") => void;
 }
@@ -12,63 +13,79 @@ interface AdminDashboardProps {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ setExperience }) => {
   const [activeTab, setActiveTab] = useState<string>('pending');
 
+
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [approvedListings, setApprovedListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const API_BASE_URL = "http://localhost:3000";
+
+
+  const fetchPendingListings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/listnings`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Kunde inte hämta boenden');
+      const data = await response.json();
+      // Filter for pending listings
+      const pendingListings = data.filter((listing: Listing) => listing.status === 'pending');
+      const approvedListingsData = data.filter((listing: Listing) => listing.status === 'approved');
+      setListings(pendingListings);
+      setApprovedListings(approvedListingsData);
+    } catch (error) {
+      console.error("Fel vid hämtning av boenden:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchPendingListings();
+  }, []);
+
   const stats = [
-    { title: 'Totalt antal användare', value: '1247', subtext: '89 värdar · 1158 gäster' },
-    { title: 'Aktiva boenden', value: '6', subtext: '1 väntar godkännande', trend: 'Aktiva just nu' },
-    { title: 'Aktiva boenden', value: '342', subtext: '+18% denna månad' },
-    { title: 'Total omsättning', value: '4.6M kr', subtext: '+12% denna månad' },
-  ];
+  { title: 'Totalt antal användare', value: '1247', subtext: '89 värdar · 1158 gäster' },
+  { 
+    title: 'Aktiva boenden', 
+    value: '6', 
+    
+    subtext: `${listings.length} väntar godkännande`, 
+    trend: 'Aktiva just nu' 
+  },
+  { title: 'Aktiva boenden', value: '342', subtext: '+18% denna månad' }, 
+  { title: 'Total omsättning', value: '4.6M kr', subtext: '+12% denna månad' },
+];
 
   const tabs = [
-    { id: 'pending', label: 'Väntande (2)' },
+    { id: 'pending', label: `Väntande (${listings.length})` },
     { id: 'users', label: 'Användare' },
-    { id: 'properties', label: 'Boenden' },
+    { id: 'properties', label: `Boenden (${approvedListings.length})` },
     { id: 'bookings', label: 'Bokningar' },
   ];
 
+
   const renderTabContent = () => {
+    if (loading) return <div className="p-8 text-center text-gray-500">Laddar...</div>;
+
     switch (activeTab) {
-      case 'pending': return <AdminTabPending />;
+      case 'pending':
+        return <AdminTabPending listings={listings} onRefresh={fetchPendingListings} />;
       case 'users': return <AdminTabUsers />;
-      case 'properties': return <AdminTabProperties />;
+      case 'properties': return <AdminTabProperties listings={approvedListings} onRefresh={fetchPendingListings} />;
       case 'bookings': return <AdminTabBookings />;
-      default: return <AdminTabPending />;
+      default:
+        return <AdminTabPending listings={listings} onRefresh={fetchPendingListings} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 font-sans">
-      {/* Admin Navbar */}
-      <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          {/* Valfritt: Göra så att även loggan tar dig tillbaka till utforska-sidan */}
-          <span 
-            className="text-xl font-bold text-indigo-600 tracking-wide cursor-pointer"
-            onClick={() => setExperience("explore")}
-          >
-            RentRight
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          {/* 2. Lägg till onClick här för att gå tillbaka till utforska-läget */}
-          <button 
-            onClick={() => setExperience("explore")}
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 cursor-pointer"
-          >
-            Utforska
-          </button>
-          <div className="flex items-center gap-2 bg-gray-900 text-white px-3 py-1.5 rounded-full text-sm font-medium">
-            <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-            Admin
-          </div>
-          <button 
-            onClick={() => setExperience("explore")} // Går till utforska vid utloggning i frontend-demot
-            className="text-sm text-gray-500 hover:text-red-500"
-          >
-            Logga ut
-          </button>
-        </div>
-      </header>
 
       {/* Grid container */}
       <main className="max-w-7xl mx-auto px-8 py-8">

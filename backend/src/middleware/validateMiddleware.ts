@@ -15,7 +15,7 @@ export const validate = (schema: ZodObject) =>
     } catch (error) {
       if (error instanceof ZodError) {
         // Create a readable string of all validation errors
-        const message = error.errors.map(e => `${e.path[1] || e.path[0]}: ${e.message}`).join(', ');
+        const message = error.issues.map((e: any) => `${e.path[1] || e.path[0]}: ${e.message}`).join(', ');
         return next(new ValidationError(message));
       }
       next(error);

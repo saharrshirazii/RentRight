@@ -20,7 +20,7 @@ function errorHandler(err: any, req: Request, res: Response, next: NextFunction)
 
    //Handle Mangoose ValidationError
    if(err.name === 'ValidationError'){
-    const errors = Object.values(err.errors).map(e => ({
+    const errors = Object.values(err.errors).map((e: any) => ({
         field: e.path,
         message: e.message,
     }));

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import Booking from '../models/Booking';
-import Property, { IProperty } from '../models/Property';
+import Property, { IProperty } from '../models/property';
 import mongoose from 'mongoose';
 
 
@@ -54,7 +54,7 @@ const property = await Property.findById<IProperty>(propertyId);
         const totalPrice = totalNights * property.pricePerNight;
 
        const newBooking = await Booking.create({
-            propertyId: new mongoose.Types.ObjectId(propertyId),
+            PropertyId: new mongoose.Types.ObjectId(propertyId),
             userId,
             startDate: start,
             endDate: end,
@@ -143,7 +143,7 @@ export const cancelBooking = async (req: Request, res: Response, next: NextFunct
       return;
     }
 
-    booking.status = 'cancelled';
+    booking.status = 'canceled';
     await booking.save();
 
     res.status(200).json({ status: 'success', message: 'Bokningen har avbokats.', data: booking });

@@ -4,14 +4,35 @@ import { StarIcon } from '@heroicons/react/20/solid';
 import { UserGroupIcon, HomeIcon, BeakerIcon } from '@heroicons/react/24/outline';
 import { Property } from '../../types/property';
 import { FilterCategories } from '../FilterCategories/FilterCategories';
-import { getProperties } from '../../api/propertyApi';
+import { getProperties, getApprovedListings } from '../../api/propertyApi';
 import FilterSection from '../FilterSection/FilterSection';
 import Hero from '../Hero/Hero';
 import { HeroSearchBar } from '../HeroSearchBar/HeroSearchBar';
 
+type ListingImage = {
+  id: string;
+  originalName: string;
+  filename: string;
+  mimetype: string;
+  size: number;
+  url: string;
+};
+
+type Listing = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  amenities: string[];
+  images: ListingImage[];
+  status: 'pending' | 'approved' | 'needs_revision' | 'rejected';
+  adminFeedback?: string;
+  createdAt: string;
+};
+
 export default function PropertyGrid() {
   const { search } = useLocation(); 
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<Listing[]>([]);
 
   // Filter UI states
   const [category, setCategory] = useState('');
@@ -38,11 +59,11 @@ export default function PropertyGrid() {
     const fetchProperties = async () => {
       setLoading(true);
       try {
-        const response = await getProperties(page, category, price, searchLocation, searchGuests);
-        if (response) {
-          setProperties(response.data);
-          setTotalPages(response.pagination?.totalPages || 1);
-          setTotalResults(response.pagination?.totalProperties || 0);
+        const approvedListings = await getApprovedListings();
+        if (approvedListings) {
+          setProperties(approvedListings);
+          setTotalResults(approvedListings.length);
+          setTotalPages(1);
         }
       } catch (err) {
         console.error("Fetch error:", err);
@@ -52,7 +73,7 @@ export default function PropertyGrid() {
     };
 
     fetchProperties();
-  }, [page, category, price, searchLocation, searchGuests]); 
+  }, []); 
 
   return (
     <div>
@@ -88,7 +109,7 @@ export default function PropertyGrid() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {properties.map((item) => (
-                <PropertyCard key={item._id} property={item} />
+                <PropertyCard key={item.id} property={item} />
               ))}
             </div>
 
@@ -126,52 +147,36 @@ export default function PropertyGrid() {
 
 
 
-const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
+const PropertyCard: React.FC<{ property: Listing }> = ({ property }) => {
   const imageUrl = property.images?.[0]
-    ? `http://localhost:3000/assets/${property.images[0]}`
+    ? property.images[0].url?.startsWith('http')
+      ? property.images[0].url
+      : `http://localhost:3000${property.images[0].url}`
     : 'https://via.placeholder.com/400';
+
+  const listingId = property.id;
 
   return (
     <div className="flex flex-col h-full group cursor-pointer bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300">
-      <Link to={`/properties/${property._id}`} className='relative h-64 overflow-hidden block'>
+      <Link to={`/properties/${listingId}`} className='relative h-64 overflow-hidden block'>
         <img
           src={imageUrl}
           alt={property.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-[10px] font-bold uppercase">
-          {property.category}
-        </div>
       </Link>
 
       <div className="p-4 flex flex-col flex-grow">
         <div className="flex justify-between items-start">
-          <Link to={`/properties/${property._id}`} className="hover:underline block flex-grow max-w-[80%]" >
+          <Link to={`/properties/${listingId}`} className="hover:underline block flex-grow max-w-[80%]" >
             <h3 className="font-bold text-gray-900 truncate w-4/5">{property.title}</h3>
           </Link>
-          <div className="flex items-center gap-1">
-            <StarIcon className="h-4 w-4 text-yellow-500" />
-            <span className="text-xs font-bold">{property.rating}</span>
-            <span className="text-gray-400 text-xs">({property.reviews})</span>
-          </div>
         </div>
 
-        <p className="text-xs text-gray-500 mt-1">{property.location}</p>
-
-        <div className="flex items-center gap-4 mt-4 py-3 border-b border-gray-300 text-gray-500">
-          <div className="flex items-center gap-1 text-[11px]">
-            <UserGroupIcon className="h-4 w-4" /> {property.guests} gäster
-          </div>
-          <div className="flex items-center gap-1 text-[11px]">
-            <HomeIcon className="h-4 w-4" /> {property.bedrooms} sovrum
-          </div>
-          <div className="flex items-center gap-1 text-[11px]">
-            <BeakerIcon className="h-4 w-4" /> {property.bathrooms} badrum
-          </div>
-        </div>
+        <p className="text-xs text-gray-500 mt-1">{property.description?.substring(0, 100)}...</p>
 
         <div className="mt-4 flex items-baseline gap-1">
-          <span className="text-l font-black text-gray-900">{property.pricePerNight} kr</span>
+          <span className="text-l font-black text-gray-900">{property.price?.toLocaleString('sv-SE')} kr</span>
           <span className="text-gray-500 text-sm">/ natt</span>
         </div>
       </div>
