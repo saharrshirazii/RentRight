@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { HiUser, HiMail, HiHeart, HiLockClosed, HiLogout, HiSwitchHorizontal } from 'react-icons/hi';
-import { useNavigate } from 'react-router-dom';
+import { HiUser, HiMail, HiHeart, HiLockClosed, HiLogout, HiSwitchHorizontal, HiOutlineHeart } from 'react-icons/hi';
+import { useNavigate, Link } from 'react-router-dom';
+import { StarIcon } from '@heroicons/react/20/solid';
 
 interface ProfilePageProps {
   setExperience: (exp: "explore" | "host" | "profile") => void;
@@ -23,6 +24,11 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
   const [conversations, setConversations] = useState<any[]>([]);
   const [messageLoading, setMessageLoading] = useState(true);
 
+  //States för favoritmarkeringar
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(true);
+
+  //UseEffect och fetch för meddelanden
   useEffect(()=>{
     const fetchInbox = async () => {
       try{
@@ -45,9 +51,54 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
     fetchInbox();
   }, []);
 
+  //UseEffect och fetch för favoritmarkeringar
+  useEffect(()=> {
+    const fetchFavorites = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if(!token) return;
+
+        const response = await fetch("http://localhost:3000/api/v1/favorites", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if(response.ok){
+          const resData = await response.json();
+          setFavorites(resData.data || resData || []);
+        }
+      }catch(error){
+        console.error("Fel vid hämtning av favoriter", error);
+      }finally{
+        setFavoritesLoading(false);
+      }
+    };
+    fetchFavorites();
+  }, []);
+
+  //Ta bort favorit från profilsidan
+  const handleRemoveFavorite = async (propertyId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try{
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:3000/api/v1/favorites/${propertyId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        // Ta bort boendet från vårt lokala state direkt så att det försvinner från skärmen snyggt
+        setFavorites(prev => prev.filter(item => item._id !== propertyId));
+      }
+  }catch(error){
+    console.error("Kunde inte ta bort favorit", error)
+  }
+  };
+
 
   // Byta roll (Host / Guest) 
-  const handleSwitchRole = async (e: React.MouseEvent) => {
+const handleSwitchRole = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const token = localStorage.getItem("token");
@@ -60,24 +111,15 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
       }
     });
 
-    if (!response.ok) {
-      console.error("Kunde inte byta roll på servern");
-      return;
-    }
-
     const data = await response.json(); 
+    
+    
+    console.log("Data från servern vid rollbyte:", data);
 
-    // Skapa det uppdaterade användarobjektet med den nya rollen från backend
-    const updatedUser = { 
-      ...userData, 
-      role: data.role 
-    };
+    if (!response.ok) return;
 
-    // Spara i localStorage och uppdatera statet i App.tsx
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    setUserData(updatedUser); 
-
-  
+    localStorage.setItem("user", JSON.stringify(data));
+    setUserData(data); 
   };
 
   // Skicka nytt lösenord till backend
@@ -255,7 +297,7 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
                 <HiSwitchHorizontal className="text-xl" />
                 <span className="text-sm font-medium">Växla läge</span>
               </button>
-              {/* ÄNDRA TILL DETTA: */}
+              
 <button 
   onClick={() => { 
     // 1. Tömmer webbläsarens minne på token och user-data
@@ -264,7 +306,7 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
     // 2. Nollställer statet i App.tsx så navbaren fattar att du är utloggad
     setUserData(null);    
     
-    // 3. Skickar dig till startsidan och rensar bort "?tab=settings" helt från URL-raden
+    // 3. Skickar dig till startsidan
     window.location.href = '/'; 
   }} 
   className="flex items-center gap-4 hover:text-red-600 transition-colors w-full text-left"
@@ -308,19 +350,77 @@ const ProfilePage = ({ setExperience, userData, setUserData }: ProfilePageProps)
             )}
           </section>
 
-          <section id="favorites" className="scroll-mt-40 md:scroll-mt-32">
+ <section id="favorites" className="scroll-mt-40 md:scroll-mt-32">
             <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Favoritmarkeringar</h3>
-            <div className="grid grid-cols-1 gap-6">
-               <div className="h-48 md:h-64 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-center text-gray-400 text-sm italic">
-                 Inga sparade objekt
-               </div>
-            </div>
+            
+            {favoritesLoading ? (
+              <p className="text-sm text-gray-400 animate-pulse">Laddar dina sparade boenden...</p>
+            ) : favorites.length === 0 ? (
+              <div className="h-48 md:h-64 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-center text-gray-400 text-sm italic">
+                Inga sparade objekt
+              </div>
+            ) : (
+              // En grid som ritar upp de sparade boendena (precis som på startsidan)
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {favorites.map((property) => {
+                  const imageUrl = property.images?.[0]
+                    ? `http://localhost:3000/assets/${property.images[0]}`
+                    : 'https://via.placeholder.com/400';
+
+                  return (
+                    <div key={property._id} className="flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
+                      <Link to={`/properties/${property._id}`} className='relative h-48 overflow-hidden block'>
+                        <img src={imageUrl} alt={property.title} className="w-full h-full object-cover" />
+                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-[10px] font-bold uppercase">
+                          {property.category}
+                        </div>
+                      </Link>
+
+                      <div className="p-4 flex flex-col flex-grow">
+                        <div className="flex justify-between items-start">
+                          <Link to={`/properties/${property._id}`} className="hover:underline block flex-grow max-w-[80%]" >
+                            <h3 className="font-bold text-gray-900 truncate">{property.title}</h3>
+                          </Link>
+                          <div className="flex items-center gap-1">
+                            <StarIcon className="h-4 w-4 text-yellow-500" />
+                            <span className="text-xs font-bold">{property.rating}</span>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-gray-500 mt-1">{property.location}</p>
+
+                        <div className="flex items-center gap-4 mt-4 py-2 border-b border-gray-200 text-gray-500 text-[11px]">
+                          <span>{property.guests} gäster</span>
+                          <span>{property.bedrooms} rum</span>
+                        </div>
+
+                        <div className="mt-4 flex justify-between items-center">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-base font-black text-gray-900">{property.pricePerNight} kr</span>
+                            <span className="text-gray-400 text-xs">/ natt</span>
+                          </div>
+
+                          {/* Klickar man här tas favoriten bort på direkten */}
+                          <button 
+                            onClick={(e) => handleRemoveFavorite(property._id, e)}
+                            className="p-2 rounded-full border border-rose-100 text-rose-500 bg-rose-50/50 hover:bg-rose-100 transition-colors cursor-pointer"
+                            title="Ta bort från sparade"
+                          >
+                            <HiHeart className="text-lg" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           <section id="settings" className="scroll-mt-40 md:scroll-mt-32">
             <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Inställningar</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-              {[ {label: 'Namn', val: userData.name || 'Användare'}, {label: 'E-post', val: userData.email} ].map((box, i) => (
+              {[ {label: 'Namn', val: userData?.name || 'Användare'}, {label: 'E-post', val: userData?.email || 'Ingen e-post'} ].map((box, i) => (
                 <div key={i} className="p-6 md:p-8 border border-gray-100 rounded-[1.5rem] hover:shadow-lg transition-all">
                   <div className="flex justify-between items-start">
                     <div>

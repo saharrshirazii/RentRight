@@ -3,12 +3,14 @@ import { Calendar } from 'primereact/calendar';
 import "./Checkin.css";
 
 interface CheckinProps {
-    label: string;
+    label?: string;
     value: string; // This is a string like "2026-05-19" for HeroSearchBar
-    onChange: (dateStr: string) => void;
+    type: string;
+    onChange?: (dateStr: string) => void;
+    className?: string;
 }
 
-export default function Checkin({ label, value, onChange }: CheckinProps) {
+export default function Checkin({ label, value, type, onChange, className }: CheckinProps) {
     
     // PrimeReact Calendar expects a native JS Date object, so we convert the incoming string.
     // If there's no value yet, we keep it null so it shows the placeholder.
@@ -29,11 +31,13 @@ export default function Checkin({ label, value, onChange }: CheckinProps) {
             const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
             const day = String(selectedDate.getDate()).padStart(2, '0');
             const formattedDateString = `${year}/${month}/${day}`;
-            
-            onChange(formattedDateString); // Pass it straight to HeroSearchBar state
-        } else {
+            if(onChange){
+            onChange(formattedDateString);
+            } // Pass it straight to HeroSearchBar state
+        } else {if(onChange){
             onChange(''); // Clears out the filter if they delete the selection
         }
+    }
     };
 
     return (

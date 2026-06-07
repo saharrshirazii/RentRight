@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState , useEffect } from 'react';
 import Toggle from './../Toggle/Toggle';
 import LogIn from '../../pages/auth/Login';
 import Register from '../../pages/auth/Register';
 import { IoIosArrowForward } from "react-icons/io";
-import { useNavigate } from 'react-router-dom';
+import { SlBasket } from "react-icons/sl";
+import {useNavigate} from 'react-router-dom';
 
 // 1. Lagt till interface för att TypeScript ska förstå setExperience
 interface NavbarProps {
@@ -18,6 +19,10 @@ const Navbar = ({ setExperience, userData, setUserData } : NavbarProps) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLoginView, setIsLoginView] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [bookingCount, setBookingCount] = useState(0);
+  const navigate = useNavigate();
+
+  
 
   const closeAuthModal = () => {
     setIsLoginOpen(false);
@@ -38,6 +43,38 @@ const handleNav = (tab: string) => {
 
   const userStore = localStorage.getItem('user');
   const showUser = userStore ? JSON.parse(userStore) : null;
+
+
+
+  //update the count of bookings in basket
+
+  const getToken = localStorage.getItem('token');
+  const isLoggedIn = !!getToken;
+  useEffect(() => {
+  const fetchBookingCount = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:3000/api/v1/bookings/my-bookings",
+        {
+          headers: {
+            Authorization: `Bearer ${getToken}`,
+          },
+        }
+      );
+
+      const json = await response.json();
+
+      if (response.ok) {
+        setBookingCount(json.data.length);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  fetchBookingCount();
+}, []);
+
 
   return (
     <>
@@ -82,14 +119,16 @@ const handleNav = (tab: string) => {
           </div>
 
           {/* Cart/Notification Icon */}
+          {isLoggedIn && (
           <div className="relative cursor-pointer hover:opacity-80 transition">
-            <svg width="18" height="18" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M.583.583h2.333l1.564 7.81a1.17 1.17 0 0 0 1.166.94h5.67a1.17 1.17 0 0 0 1.167-.94l.933-4.893H3.5m2.333 8.75a.583.583 0 1 1-1.167 0 .583.583 0 0 1 1.167 0m6.417 0a.583.583 0 1 1-1.167 0 .583.583 0 0 1 1.167 0" stroke="#615fff" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <button onClick = {() => navigate('/my-bookings')}>
+            <SlBasket size={25} className='text-indigo-500 font-bold'/>
             <span className="absolute -top-2 -right-3 flex items-center justify-center text-[10px] text-white bg-indigo-500 w-[18px] h-[18px] rounded-full">
-              3
+              {bookingCount}
             </span>
+            </button>
           </div>
+          )}
 
           {showUser ? (
             <div className="relative">
@@ -171,7 +210,7 @@ const handleNav = (tab: string) => {
       {/* Auth Modal */}
       {isLoginOpen && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-md"
           onClick={() => setIsLoginOpen(false)}
         >
           <div 

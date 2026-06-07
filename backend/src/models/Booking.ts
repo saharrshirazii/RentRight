@@ -36,7 +36,7 @@ const BookingSchema: Schema = new Schema (
     },
     status: {
         type: String,
-        enum: ['pending' , 'confirmed' , 'canceled'],
+        enum: ['pending' , 'confirmed' , 'cancelled'],
         default: 'confirmed',
     },
 },
@@ -45,8 +45,7 @@ const BookingSchema: Schema = new Schema (
   }
 );
 
-// Indexing for high performance
-// This speeds up our date-overlap checks significantly when searching!
+
 BookingSchema.index({ propertyId: 1, startDate: 1, endDate: 1 });
 
 export default mongoose.model<IBooking>('Booking', BookingSchema);
