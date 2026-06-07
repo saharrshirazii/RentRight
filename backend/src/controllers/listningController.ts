@@ -258,7 +258,11 @@ export const removeListning = async (req: Request, res: Response) => {
       await Message.create({
         sender: adminId as any,
         receiver: currentListning.userId as any,
-        text: `Din annons "${currentListning.title}" har tagits bort från plattformen. Anledning: ${reason}`
+        text: `Din annons har tagits bort från plattformen.`,
+        type: 'listing_deleted',
+        listingId: req.params.id,
+        listingTitle: currentListning.title,
+        deletionReason: reason
       });
     }
 

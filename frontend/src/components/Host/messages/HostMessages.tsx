@@ -5,6 +5,10 @@ interface Message {
   sender: string;
   receiver: string;
   text: string;
+  type: 'text' | 'listing_deleted';
+  listingId?: string;
+  listingTitle?: string;
+  deletionReason?: string;
   createdAt: string;
 }
 
@@ -24,7 +28,7 @@ export const HostMessages: React.FC = () => {
           return;
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/v1/messages/inbox`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/messages/all`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -35,6 +39,7 @@ export const HostMessages: React.FC = () => {
         }
 
         const data = await response.json();
+        console.log('Messages data:', data);
         setMessages(data.data || []);
       } catch (err) {
         setError('Kunde inte ladda meddelanden.');
@@ -64,17 +69,43 @@ export const HostMessages: React.FC = () => {
       {messages.map((message) => (
         <div
           key={message._id}
-          className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm"
+          className={`bg-white border rounded-xl p-4 shadow-sm ${
+            message.type === 'listing_deleted' ? 'border-red-200 bg-red-50' : 'border-gray-200'
+          }`}
         >
           <div className="flex justify-between items-start mb-2">
-            <span className="text-xs font-semibold text-indigo-600">
-              Meddelande från admin
+            <span className={`text-xs font-semibold ${
+              message.type === 'listing_deleted' ? 'text-red-600' : 'text-indigo-600'
+            }`}>
+              {message.type === 'listing_deleted' ? '⚠️ Boende borttaget' : 'Meddelande från admin'}
             </span>
             <span className="text-xs text-gray-400">
-              {new Date(message.createdAt).toLocaleDateString('sv-SE')}
+              {message.createdAt ? new Date(message.createdAt).toLocaleDateString('sv-SE') : 'N/A'}
             </span>
           </div>
-          <p className="text-sm text-gray-700">{message.text}</p>
+
+          {message.type === 'listing_deleted' ? (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700">{message.text}</p>
+              {message.listingTitle && (
+                <div className="bg-white rounded-lg p-3 border border-red-100">
+                  <p className="text-xs font-semibold text-gray-900 mb-1">Borttaget boende:</p>
+                  <p className="text-sm font-medium text-gray-800">{message.listingTitle}</p>
+                  {message.deletionReason && (
+                    <div className="mt-2">
+                      <p className="text-xs font-semibold text-gray-900 mb-1">Anledning:</p>
+                      <p className="text-sm text-gray-600">{message.deletionReason}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              {!message.listingTitle && message.text && (
+                <p className="text-sm text-gray-600 italic">{message.text}</p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-700">{message.text}</p>
+          )}
         </div>
       ))}
     </div>
