@@ -7,12 +7,17 @@ export type ListingImage = {
   url: string;
 };
 
+export type ListingStatus = 'pending' | 'approved' | 'needs_revision' | 'rejected';
+
 export type Listning = {
   id: string;
+  userId: string;
   title: string;
   description: string;
   price: number;
   amenities: string[];
   images: ListingImage[];
+  status: ListingStatus;
+  adminFeedback?: string;
   createdAt: string;
 };

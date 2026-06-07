@@ -18,8 +18,9 @@ import ProfilePage from "./pages/profile/ProfilePage";
 import ListingForm from "./components/Host/listings/ListingForm";
 import ListingPreviewModal from "./components/Host/listings/ListingPreviewModal";
 import ListingsView from "./components/Host/listings/ListingsView";
-import HostBookings from "./components/Host/bookings/HostBookings"; 
+import HostBookings from "./components/Host/bookings/HostBookings";
 import HostDashboard from "./components/Host/dashboard/HostDashboard";
+import { HostMessages } from "./components/Host/messages/HostMessages";
 
 // Admin & Typer
 import { Listing, TabId } from "./types/listingtypes";
@@ -30,6 +31,7 @@ const API_BASE_URL = "http://localhost:3000";
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: "boende", label: "Boende" },
   { id: "bokningar", label: "Bokningar" },
+  { id: "meddelanden", label: "Meddelanden" },
   { id: "tillganglighet", label: "Tillgänglighet" },
   { id: "prissattning", label: "Prissättning" },
   { id: "recensioner", label: "Recensioner" },
@@ -274,17 +276,23 @@ const App: React.FC = () => {
                       isLoading={isLoadingListings}
                       listings={listings}
                       onCreate={() => setIsCreateOpen(true)}
-                      onDelete={handleDeleteListing}
                       onEdit={setEditingListing}
                       onView={setViewingListing}
                     />
                   )}
-                  
+
                   {activeTab === "bokningar" && (
-                    <HostBookings /> 
+                    <HostBookings />
                   )}
 
-                  {activeTab !== "boende" && activeTab !== "bokningar" && (
+                  {activeTab === "meddelanden" && (
+                    <div style={{ padding: '20px' }}>
+                      <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Meddelanden</h2>
+                      <HostMessages />
+                    </div>
+                  )}
+
+                  {activeTab !== "boende" && activeTab !== "bokningar" && activeTab !== "meddelanden" && (
                     <div className="placeholder-card">
                       <h2>{tabs.find((tab) => tab.id === activeTab)?.label ?? ""}</h2>
                       <p>Den här designvyn är inte byggd nu.</p>

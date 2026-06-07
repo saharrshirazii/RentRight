@@ -1,12 +1,16 @@
 import { Router } from 'express';
-import { addListning, editListning, listListnings, removeListning } from '../controllers/listningController';
+import { addListning, editListning, listApprovedListnings, listListnings, removeListning, reviewListning } from '../controllers/listningController';
 import { uploadListingImages } from '../middleware/uploadMiddleware';
 import { verifyToken } from '../middleware/authMiddleware';
 import { checkRole } from '../middleware/roleMiddleware';
 
 const router = Router();
 
+
+router.get('/approved', listApprovedListnings);
+
 router.get('/', listListnings);
+
 
 router.post(
     '/', 
@@ -16,6 +20,7 @@ router.post(
     addListning
 );
 
+
 router.put(
     '/:id',
     verifyToken,
@@ -24,10 +29,19 @@ router.put(
     editListning
 );
 
+
+router.patch(
+    '/:id/review',
+    verifyToken,
+    checkRole(['admin']),
+    reviewListning
+);
+
+
 router.delete(
     '/:id', 
     verifyToken, 
-    checkRole(['host', 'admin']), 
+    checkRole(['admin']),
     removeListning
 );
 

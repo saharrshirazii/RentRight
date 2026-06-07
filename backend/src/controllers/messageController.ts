@@ -64,14 +64,32 @@ export const getInbox = async (req: Request, res: Response) => {
 
             if(!conversationExist){
                 inbox.push({
-                    user: otherUser, 
-                    lastMessage: msg.text, 
+                    user: otherUser,
+                    lastMessage: msg.text,
                     date: msg.createdAt
                 })
             }
         }
 
         res.status(200).json({success:true, data: inbox})
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({message: "Serverfel"})
+    }
+}
+
+export const getAllMessages = async (req: Request, res: Response) => {
+    try{
+        const currentUser: any = req.user?.id;
+
+        if(!currentUser){
+            return res.status(401).json({message: "Du måste vara inloggad"})
+        }
+
+        const messages = await IMessage.find({$or:[{sender: currentUser}, {receiver: currentUser}]} as any).sort({createdAt: -1})
+
+        res.status(200).json({success:true, data: messages})
 
     }catch(error){
         console.error(error);
