@@ -205,14 +205,6 @@ const App: React.FC = () => {
                     Mina boenden
                   </button>
                 )}
-                <button 
-                  type="button" 
-                  className="secondary-button" 
-                  style={{ backgroundColor: '#e0e7ff', color: '#4338ca' }} 
-                  onClick={() => navigate('/admin')}
-                >
-                  Admin sidan
-                </button>
               </div>
               <PropertyGrid />
             </main>
