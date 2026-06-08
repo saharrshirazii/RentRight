@@ -118,7 +118,7 @@ export default function ListingsView({
                     </span>
                   </div>
                   <p className="listing-card__location">
-                    {listing.images ? listing.images.length : 0} bilder uppladdade
+                    {listing.location || "Plats ej angiven"} · {listing.images ? listing.images.length : 0} bilder uppladdade
                   </p>
                 </div>
 
@@ -126,6 +126,12 @@ export default function ListingsView({
               </div>
 
               <p className="listing-card__description">{listing.description}</p>
+
+              <div className="listing-card__meta">
+                <span>{listing.guests ?? 1} gäster</span>
+                <span>{listing.bedrooms ?? 0} sovrum</span>
+                <span>{listing.bathrooms ?? 0} badrum</span>
+              </div>
 
               {listing.adminFeedback && (
                 <div style={{

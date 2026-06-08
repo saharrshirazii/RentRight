@@ -6,7 +6,11 @@ type CreateListningInput = {
   userId: string;
   title: string;
   description: string;
+  location: string;
   price: number;
+  guests: number;
+  bedrooms: number;
+  bathrooms: number;
   amenities: string[];
   images: ListingImage[];
   status?: 'pending' | 'approved' | 'needs_revision' | 'rejected';
@@ -20,7 +24,11 @@ const toListning = (listning: IListning): Listning => ({
   userId: listning.userId?.toString() || '',
   title: listning.title,
   description: listning.description,
+  location: listning.location || 'Sverige',
   price: listning.price,
+  guests: listning.guests || 1,
+  bedrooms: listning.bedrooms ?? 0,
+  bathrooms: listning.bathrooms ?? 0,
   amenities: listning.amenities,
   images: listning.images,
   status: listning.status,
@@ -43,7 +51,11 @@ export const createListning = async (input: CreateListningInput) => {
     userId: input.userId as any,
     title: input.title,
     description: input.description,
+    location: input.location,
     price: input.price,
+    guests: input.guests,
+    bedrooms: input.bedrooms,
+    bathrooms: input.bathrooms,
     amenities: input.amenities,
     images: input.images,
     status: input.status,

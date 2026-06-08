@@ -46,6 +46,11 @@ const parseKeepImageIds = (value: unknown) => {
   }
 };
 
+const parseCount = (value: unknown) => {
+  const count = Number(value);
+  return Number.isInteger(count) ? count : NaN;
+};
+
 export const listListnings = async (_req: Request, res: Response) => {
   try {
     res.json(await getListnings());
@@ -82,13 +87,30 @@ export const getListning = async (req: Request, res: Response) => {
 
 export const addListning = async (req: Request, res: Response) => {
   try {
-    const { title, description, price } = req.body;
+    const { title, description, location, price } = req.body;
     const numericPrice = Number(price);
+    const guests = parseCount(req.body.guests);
+    const bedrooms = parseCount(req.body.bedrooms);
+    const bathrooms = parseCount(req.body.bathrooms);
     const userId = req.user?.id;
 
-    if (!title || !description || !Number.isFinite(numericPrice) || numericPrice <= 0) {
+    if (!title || !description || !location || !Number.isFinite(numericPrice) || numericPrice <= 0) {
       res.status(400).json({
-        message: 'Titel, beskrivning och ett pris större än 0 krävs.',
+        message: 'Titel, beskrivning, plats och ett pris större än 0 krävs.',
+      });
+      return;
+    }
+
+    if (
+      !Number.isInteger(guests) ||
+      !Number.isInteger(bedrooms) ||
+      !Number.isInteger(bathrooms) ||
+      guests < 1 ||
+      bedrooms < 0 ||
+      bathrooms < 0
+    ) {
+      res.status(400).json({
+        message: 'Ange minst 1 gäst samt giltigt antal sovrum och badrum.',
       });
       return;
     }
@@ -115,7 +137,11 @@ export const addListning = async (req: Request, res: Response) => {
       userId: String(userId),
       title: String(title).trim(),
       description: String(description).trim(),
+      location: String(location).trim(),
       price: numericPrice,
+      guests,
+      bedrooms,
+      bathrooms,
       amenities: parseAmenities(req.body.amenities),
       images,
     });
@@ -129,12 +155,29 @@ export const addListning = async (req: Request, res: Response) => {
 
 export const editListning = async (req: Request, res: Response) => {
   try {
-    const { title, description, price } = req.body;
+    const { title, description, location, price } = req.body;
     const numericPrice = Number(price);
+    const guests = parseCount(req.body.guests);
+    const bedrooms = parseCount(req.body.bedrooms);
+    const bathrooms = parseCount(req.body.bathrooms);
 
-    if (!title || !description || !Number.isFinite(numericPrice) || numericPrice <= 0) {
+    if (!title || !description || !location || !Number.isFinite(numericPrice) || numericPrice <= 0) {
       res.status(400).json({
-        message: 'Titel, beskrivning och ett pris större än 0 krävs.',
+        message: 'Titel, beskrivning, plats och ett pris större än 0 krävs.',
+      });
+      return;
+    }
+
+    if (
+      !Number.isInteger(guests) ||
+      !Number.isInteger(bedrooms) ||
+      !Number.isInteger(bathrooms) ||
+      guests < 1 ||
+      bedrooms < 0 ||
+      bathrooms < 0
+    ) {
+      res.status(400).json({
+        message: 'Ange minst 1 gäst samt giltigt antal sovrum och badrum.',
       });
       return;
     }
@@ -186,7 +229,11 @@ export const editListning = async (req: Request, res: Response) => {
     const updatedListning = await updateListning(req.params.id, {
       title: String(title).trim(),
       description: String(description).trim(),
+      location: String(location).trim(),
       price: numericPrice,
+      guests,
+      bedrooms,
+      bathrooms,
       amenities: parseAmenities(req.body.amenities),
       images,
       status: 'pending',

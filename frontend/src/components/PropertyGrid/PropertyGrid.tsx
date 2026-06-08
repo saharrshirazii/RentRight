@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { StarIcon } from '@heroicons/react/20/solid';
-import { UserGroupIcon, HomeIcon, BeakerIcon } from '@heroicons/react/24/outline';
+import { BeakerIcon, HomeIcon, MapPinIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { Property } from '../../types/property';
 import { FilterCategories } from '../FilterCategories/FilterCategories';
-import { getProperties, getApprovedListings } from '../../api/propertyApi';
+import { getApprovedListings } from '../../api/propertyApi';
 import FilterSection from '../FilterSection/FilterSection';
 import Hero from '../Hero/Hero';
 import { HeroSearchBar } from '../HeroSearchBar/HeroSearchBar';
@@ -23,7 +22,11 @@ type Listing = {
   id: string;
   title: string;
   description: string;
+  location: string;
   price: number;
+  guests: number;
+  bedrooms: number;
+  bathrooms: number;
   amenities: string[];
   images: ListingImage[];
   status: 'pending' | 'approved' | 'needs_revision' | 'rejected';
@@ -116,6 +119,10 @@ export default function PropertyGrid() {
       ...item,
       _id: item.id,
       pricePerNight: item.price,
+      location: item.location || 'Sverige',
+      guests: item.guests ?? 1,
+      bedrooms: item.bedrooms ?? 0,
+      bathrooms: item.bathrooms ?? 0,
       images: item.images // SE TILL ATT DENNA RAD FINNS
     } as unknown as Property} 
   />
@@ -242,6 +249,26 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         </div>
 
         <p className="text-xs text-gray-500 mt-1">{property.description?.substring(0, 100)}...</p>
+
+        <div className="mt-3 flex items-center gap-1 text-xs text-gray-500">
+          <MapPinIcon className="h-4 w-4 text-gray-400" />
+          <span className="truncate">{property.location || 'Sverige'}</span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-gray-600">
+          <span className="flex items-center gap-1 whitespace-nowrap">
+            <UserGroupIcon className="h-4 w-4 text-gray-400" />
+            {property.guests ?? 1} gäster
+          </span>
+          <span className="flex items-center gap-1 whitespace-nowrap">
+            <HomeIcon className="h-4 w-4 text-gray-400" />
+            {property.bedrooms ?? 0} sovrum
+          </span>
+          <span className="flex items-center gap-1 whitespace-nowrap">
+            <BeakerIcon className="h-4 w-4 text-gray-400" />
+            {property.bathrooms ?? 0} badrum
+          </span>
+        </div>
 
       <div className='mt-4 flex justify-between items-center'>
         <div className="flex items-baseline gap-1">

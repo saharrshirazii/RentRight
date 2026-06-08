@@ -25,7 +25,11 @@ export type Listing = {
   _id?: string;
   title: string;
   description: string;
+  location: string;
   price: number;
+  guests: number;
+  bedrooms: number;
+  bathrooms: number;
   amenities: string[];
   images: ListingImage[];
   status: ListingStatus;
