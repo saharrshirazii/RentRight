@@ -119,7 +119,7 @@ const handleNav = (tab: string) => {
           </div>
 
           {/* Cart/Notification Icon */}
-          {isLoggedIn && (
+          {!showUser || (showUser?.role !== 'host' && showUser?.role !== 'admin') ? (
           <div className="relative cursor-pointer hover:opacity-80 transition">
             <button onClick = {() => navigate('/my-bookings')}>
             <SlBasket size={25} className='text-indigo-500 font-bold'/>
@@ -128,6 +128,24 @@ const handleNav = (tab: string) => {
             </span>
             </button>
           </div>
+          ) : null}
+
+          {/* Host Navigation Buttons */}
+          {showUser?.role === 'host' && (
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => navigate('/')}
+                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              >
+                Utforska
+              </button>
+              <button 
+                onClick={() => navigate('/host')}
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition"
+              >
+                Mina boenden
+              </button>
+            </div>
           )}
 
           {showUser ? (

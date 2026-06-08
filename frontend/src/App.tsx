@@ -195,17 +195,6 @@ const App: React.FC = () => {
           path="/" 
           element={
             <main>
-              <div className="explore-host-switch" style={{ display: 'flex', gap: '10px', padding: '10px 20px' }}>
-                {userData?.role === 'host' && (
-                  <button 
-                    type="button" 
-                    className="primary-button" 
-                    onClick={() => navigate('/host')}
-                  >
-                    Mina boenden
-                  </button>
-                )}
-              </div>
               <PropertyGrid />
             </main>
           } 

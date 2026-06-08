@@ -27,7 +27,10 @@ function LogIn({ onToggle }: LoginProps) {
       if (response.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/");
+        
+        // Redirect host to /host, others to /
+        const targetPath = data.user.role === 'host' ? '/host' : '/';
+        navigate(targetPath);
         window.location.reload();
       } else {
         // Hantera både specifika Zod-fel och generella felmeddelanden
