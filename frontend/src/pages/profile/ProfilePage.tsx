@@ -113,13 +113,21 @@ const handleSwitchRole = async (e: React.MouseEvent) => {
 
     const data = await response.json(); 
     
-    
     console.log("Data från servern vid rollbyte:", data);
 
     if (!response.ok) return;
 
-    localStorage.setItem("user", JSON.stringify(data));
-    setUserData(data); 
+    // 1. Spara den nya tokenen i localStorage
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+    }
+
+    // 2. Spara användardatan (hanterar både om du skickar tillbaka objektet direkt eller i en 'user'-property)
+    const userToSave = data.user || data;
+    localStorage.setItem("user", JSON.stringify(userToSave));
+    
+    // 3. Uppdatera React-statet så att UI:t uppdateras direkt
+    setUserData(userToSave); 
   };
 
   // Skicka nytt lösenord till backend

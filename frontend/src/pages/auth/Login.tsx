@@ -4,7 +4,7 @@ import Button from "../../components/Button/Button";
 import { useNavigate } from 'react-router-dom';
 
 interface LoginProps {
-  onToggle: () => void;
+  onToggle?: () => void;
 }
 
 function LogIn({ onToggle }: LoginProps) {
