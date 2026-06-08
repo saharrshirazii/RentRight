@@ -5,7 +5,7 @@ import "./Checkin.css";
 interface CheckinProps {
     label?: string;
     value: string; // This is a string like "2026-05-19" for HeroSearchBar
-    type: string;
+    type?: string;
     onChange?: (dateStr: string) => void;
     className?: string;
 }

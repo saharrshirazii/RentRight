@@ -1,13 +1,27 @@
 
+import { ReactNode } from 'react';
+
+export type PropertyImage = string | {
+  id?: string;
+  originalName?: string;
+  filename?: string;
+  mimetype?: string;
+  size?: number;
+  url: string;
+};
 
 export interface Property {
   _id: string;
+  id?: string;
   title: string;
   location: string;
+  description?: string;
   pricePerNight: number;
+  price?: number;
   rating: number;
   reviews: number;
-  images: string[];
+  reviewsCount?: number;
+  images: PropertyImage[];
   guests: number;
   bedrooms: number;
   bathrooms: number; 
@@ -16,6 +30,7 @@ export interface Property {
     _id: string;
     name: string;
     email: string;
+    role?: string;
   };
 }
 

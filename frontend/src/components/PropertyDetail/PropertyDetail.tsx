@@ -28,6 +28,7 @@ type Listing = {
   location?: string;
   owner?: {
     name: string;
+    role?: string;
   };
   guests?: number;
   bedrooms?: number;
@@ -51,6 +52,7 @@ type PropertyDisplay = {
   location?: string;
   owner?: {
     name: string;
+    role?: string;
   };
   guests?: number;
   bedrooms?: number;
