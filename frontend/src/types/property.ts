@@ -16,7 +16,6 @@ export interface Property {
   title: string;
   description: string;
   location: string;
-  description?: string;
   pricePerNight: number;
   price?: number;
   rating: number;

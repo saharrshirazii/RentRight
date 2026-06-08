@@ -64,6 +64,22 @@ export const listApprovedListnings = async (_req: Request, res: Response) => {
   }
 };
 
+export const getListning = async (req: Request, res: Response) => {
+  try {
+    const listning = await findListning(req.params.id);
+
+    if (!listning) {
+      res.status(404).json({ message: 'Annonsen hittades inte.' });
+      return;
+    }
+
+    res.json(listning);
+  } catch (error) {
+    console.error('Fel vid hämtning av annons:', error);
+    res.status(500).json({ message: 'Kunde inte hämta annonsen.' });
+  }
+};
+
 export const addListning = async (req: Request, res: Response) => {
   try {
     const { title, description, price } = req.body;
