@@ -55,7 +55,9 @@ export const switchRole = async (req: any, res: Response) => {
         user.role = user.role === 'guest' ? 'host' : 'guest';
         await user.save();
 
-        return res.status(200).json({ id: user._id, name: user.name, email: user.email, role: user.role });
+        const newToken = createToken(user._id.toString(), user.role);
+
+        return res.status(200).json({ id: user._id, name: user.name, email: user.email, role: user.role, token: newToken });
     } catch (error) {
         return res.status(500).json({ message: "Serverfel" });
     }
