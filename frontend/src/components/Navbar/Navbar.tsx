@@ -160,6 +160,24 @@ const handleNav = (tab: string) => {
             </div>
           )}
 
+          {/* Admin Navigation Buttons */}
+          {showUser?.role === 'admin' && (
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => navigate('/')}
+                className="px-4 py-2 text-sm font-medium text-black border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+              >
+                Utforska
+              </button>
+              <button 
+                onClick={() => navigate('/admin')}
+                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition"
+              >
+                Kontrollpanel
+              </button>
+            </div>
+          )}
+
           {showUser ? (
             <div className="relative">
               {/* Kapseln: Hej + Namn + Profilikon */}

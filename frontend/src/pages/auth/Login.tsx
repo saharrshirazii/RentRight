@@ -28,8 +28,11 @@ function LogIn({ onToggle }: LoginProps) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
         
-        // Redirect host to /host, others to /
-        const targetPath = data.user.role === 'host' ? '/host' : '/';
+        // Redirect based on role
+        const targetPath = 
+          data.user.role === 'host' ? '/host' : 
+          data.user.role === 'admin' ? '/admin' : 
+          '/';
         navigate(targetPath);
         window.location.reload();
       } else {
