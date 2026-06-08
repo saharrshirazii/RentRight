@@ -1,8 +1,9 @@
-
+import { ReactNode } from 'react';
 
 export interface Property {
   _id: string;
   title: string;
+  description: string;
   location: string;
   pricePerNight: number;
   rating: number;

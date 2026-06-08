@@ -110,7 +110,15 @@ export default function PropertyGrid() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {properties.map((item) => (
-                <PropertyCard key={item.id} property={item} />
+              <PropertyCard 
+    key={item.id} 
+    property={{
+      ...item,
+      _id: item.id,
+      pricePerNight: item.price,
+      images: item.images // SE TILL ATT DENNA RAD FINNS
+    } as unknown as Property} 
+  />
               ))}
             </div>
 
@@ -151,14 +159,19 @@ export default function PropertyGrid() {
 const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   const [isFavorite, setIsFavorite] = useState(false);
 
-  const imageUrl = property.images?.[0]
-    ? property.images[0].url?.startsWith('http')
-      ? property.images[0].url
-      : `http://localhost:3000${property.images[0].url}`
+  const imageUrl = property.images && property.images.length > 0
+    ? (typeof property.images[0] === 'string'
+      ? property.images[0]
+      : (property.images[0] as any).url?.startsWith('http')
+        ? (property.images[0] as any).url
+        : `http://localhost:3000${(property.images[0] as any).url}`)
     : 'https://via.placeholder.com/400';
 
     useEffect(() => {
       const checkFavoriteStatus = async () => {
+
+        if (!property || !property._id) return;
+
         try {
           const token = localStorage.getItem("token");
           if (!token) return; 
@@ -176,7 +189,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         }
         };
         checkFavoriteStatus();
-      }, [property._id]);
+      }, [property?._id]);
 
       const handleFavoriteClick = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -213,7 +226,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
   return (
     <div className="flex flex-col h-full group cursor-pointer bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300">
-      <Link to={`/properties/${listingId}`} className='relative h-64 overflow-hidden block'>
+      <Link to={`/properties/${property._id}`} className='relative h-64 overflow-hidden block'>
         <img
           src={imageUrl}
           alt={property.title}
@@ -223,7 +236,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
       <div className="p-4 flex flex-col flex-grow">
         <div className="flex justify-between items-start">
-          <Link to={`/properties/${listingId}`} className="hover:underline block flex-grow max-w-[80%]" >
+          <Link to={`/properties/${property._id}`} className="hover:underline block flex-grow max-w-[80%]" >
             <h3 className="font-bold text-gray-900 truncate w-4/5">{property.title}</h3>
           </Link>
         </div>
