@@ -34,7 +34,10 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
         next();
     }
 
-    catch(error) {
+    catch(error:any) {
+        if(error.name === 'TokenExpiredError'){
+            return res.status(401).json({message: "Sessionen har gått ut, vänligen logga in igen"});
+        }
         return res.status(403).json({message: "Ogiltig token"});
     }
 };

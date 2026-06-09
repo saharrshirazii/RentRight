@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from 'react-router-dom'; 
+import { TokenExpiredModal } from "./components/TokenExpired/TokenExpiredModal";
 
 // Befintliga komponenter för gästflödet
 import Navbar from "./components/Navbar/Navbar";
@@ -56,6 +57,7 @@ const App: React.FC = () => {
   const [isLoadingListings, setIsLoadingListings] = useState(true);
   const [listingError, setListingError] = useState("");
   const [deletingListingId, setDeletingListingId] = useState("");
+  const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
 
   const [userData, setUserData] = useState<any>(() => {
     const savedUser = localStorage.getItem('user');
@@ -100,6 +102,53 @@ const App: React.FC = () => {
       setIsLoadingListings(false);
     }
   };
+
+useEffect(() => {
+  let isModalOpen = false;
+
+  (window as any).triggerSessionExpired = () => {
+    isModalOpen = true;
+    setIsTokenModalOpen(true);
+  };
+
+  const originalFetch = window.fetch;
+  window.fetch = async (...args) => {
+    const response = await originalFetch(...args);
+    
+    if (isModalOpen) return response;
+
+    if (response.status === 401) {
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setUserData(null); 
+      
+      isModalOpen = true;
+      setIsTokenModalOpen(true);
+    }
+    
+    return response;
+  };
+
+  const interval = setInterval(async () => {
+    const token = localStorage.getItem("token");
+    if (!token || isModalOpen) return; 
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+     
+    } catch (error) {
+      console.error("Session check failed", error);
+    }
+  }, 10000);
+
+  return () => {
+    clearInterval(interval);
+    window.fetch = originalFetch;
+  };
+}, []);
 
   useEffect(() => {
     void fetchListings();
@@ -345,6 +394,15 @@ const App: React.FC = () => {
       </Routes>
       
       <Footer />
+
+      <TokenExpiredModal 
+  isOpen={isTokenModalOpen} 
+  onClose={() => {
+    setIsTokenModalOpen(false);
+    // Ta bort window.location.reload()! 
+    // Användaren får ligga kvar på sidan.
+  }} 
+/>
     </div>
   );
 }
