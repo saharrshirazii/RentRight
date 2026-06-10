@@ -4,6 +4,7 @@ export interface User {
     email: string;
     password: string;
     role: 'guest' | 'host' | 'admin' ;
+    isActive?: boolean;
 }
 
 export interface UserParams {
@@ -23,4 +24,5 @@ export interface UpdateUserBody {
     email?: string;
     password?: string;
     role?: 'guest' | 'host' | 'admin' ;
+    isActive?: boolean;
 }
