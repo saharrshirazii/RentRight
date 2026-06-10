@@ -1,13 +1,22 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
 import { UserParams, CreateUserBody, UpdateUserBody } from '../types/user.types';
 import User from '../models/User';
+import { verifyToken } from '../middleware/authMiddleware';
+import { checkRole } from '../middleware/roleMiddleware';
 
 const router = Router();
+
+router.use(verifyToken, checkRole(['admin']));
 
 // GET /api/v1/users – get all users
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const users = await User.find();
+        const filters: any = {};
+        if (req.query.role) {
+            filters.role = String(req.query.role).toLowerCase();
+        }
+
+        const users = await User.find(filters).select('-password');
         res.json(users);
     } catch (error) {
         next(error);
@@ -17,7 +26,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 // GET /api/v1/users/:id – get a specific user
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findById(req.params.id).select('-password');
         if (!user) {
             return void res.status(404).json({ message: 'User not found.' });
         }
