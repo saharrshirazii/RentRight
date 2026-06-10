@@ -103,51 +103,43 @@ const App: React.FC = () => {
     }
   };
 
+
 useEffect(() => {
-  let isModalOpen = false;
-
-  (window as any).triggerSessionExpired = () => {
-    isModalOpen = true;
-    setIsTokenModalOpen(true);
-  };
-
-  const originalFetch = window.fetch;
-  window.fetch = async (...args) => {
-    const response = await originalFetch(...args);
-    
-    if (isModalOpen) return response;
-
-    if (response.status === 401) {
-
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      setUserData(null); 
-      
-      isModalOpen = true;
-      setIsTokenModalOpen(true);
-    }
-    
-    return response;
-  };
-
-  const interval = setInterval(async () => {
+  const checkSession = async (signal: AbortSignal) => {
     const token = localStorage.getItem("token");
-    if (!token || isModalOpen) return; 
+    if (!token) return; 
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
+        signal, // Skickar med signalen för att kunna avbryta
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       });
-     
-    } catch (error) {
-      console.error("Session check failed", error);
+      
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUserData(null);
+        setIsTokenModalOpen(true);
+      }
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error("Session check failed", error);
+      }
     }
-  }, 10000);
-
-  return () => {
-    clearInterval(interval);
-    window.fetch = originalFetch;
   };
+
+  const interval = setInterval(() => {
+    const controller = new AbortController();
+    checkSession(controller.signal);
+    // Städning: om 5 sekunder har gått och anropet inte är klart, avbryt det
+    return () => controller.abort();
+  }, 5000);
+
+  return () => clearInterval(interval);
 }, []);
 
   useEffect(() => {
@@ -390,8 +382,8 @@ useEffect(() => {
   isOpen={isTokenModalOpen} 
   onClose={() => {
     setIsTokenModalOpen(false);
-    // Ta bort window.location.reload()! 
-    // Användaren får ligga kvar på sidan.
+    // Tvinga användaren till login när sessionen dött
+    window.location.href = "/login"; 
   }} 
 />
     </div>
