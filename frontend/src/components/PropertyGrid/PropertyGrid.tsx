@@ -29,6 +29,7 @@ type Listing = {
   bathrooms: number;
   amenities: string[];
   images: ListingImage[];
+  propertyType: 'Lägenhet' | 'Radhus' | 'Studio' | 'Stuga' | 'Villa';
   status: 'pending' | 'approved' | 'needs_revision' | 'rejected';
   adminFeedback?: string;
   createdAt: string;
@@ -63,7 +64,7 @@ export default function PropertyGrid() {
     const fetchProperties = async () => {
       setLoading(true);
       try {
-        const approvedListings = await getApprovedListings();
+        const approvedListings = await getApprovedListings(category);
         if (approvedListings) {
           setProperties(approvedListings);
           setTotalResults(approvedListings.length);
@@ -77,7 +78,7 @@ export default function PropertyGrid() {
     };
 
     fetchProperties();
-  }, []); 
+  }, [category]);
 
   return (
     <div>
@@ -123,6 +124,7 @@ export default function PropertyGrid() {
       guests: item.guests ?? 1,
       bedrooms: item.bedrooms ?? 0,
       bathrooms: item.bathrooms ?? 0,
+      category: item.propertyType ?? 'Lägenhet',
       images: item.images // SE TILL ATT DENNA RAD FINNS
     } as unknown as Property} 
   />
@@ -234,6 +236,9 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   return (
     <div className="flex flex-col h-full group cursor-pointer bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300">
       <Link to={`/properties/${property._id}`} className='relative h-64 overflow-hidden block'>
+        <div className="absolute right-4 top-4 z-20 rounded-full bg-slate-900/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-white shadow-lg pointer-events-none">
+          {property.category}
+        </div>
         <img
           src={imageUrl}
           alt={property.title}

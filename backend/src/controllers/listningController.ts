@@ -51,6 +51,17 @@ const parseCount = (value: unknown) => {
   return Number.isInteger(count) ? count : NaN;
 };
 
+const allowedPropertyTypes = ['Lägenhet', 'Radhus', 'Studio', 'Stuga', 'Villa'] as const;
+
+type PropertyType = (typeof allowedPropertyTypes)[number];
+
+const parsePropertyType = (value: unknown, fallback: PropertyType): PropertyType => {
+  const propertyType = typeof value === 'string' ? value.trim() : String(value ?? '').trim();
+  return allowedPropertyTypes.includes(propertyType as PropertyType)
+    ? (propertyType as PropertyType)
+    : fallback;
+};
+
 export const listListnings = async (_req: Request, res: Response) => {
   try {
     res.json(await getListnings());
@@ -60,9 +71,11 @@ export const listListnings = async (_req: Request, res: Response) => {
   }
 };
 
-export const listApprovedListnings = async (_req: Request, res: Response) => {
+export const listApprovedListnings = async (req: Request, res: Response) => {
   try {
-    res.json(await getApprovedListnings());
+    const category = typeof req.query.propertyType === 'string' ? req.query.propertyType.trim() : '';
+    const validCategory = allowedPropertyTypes.includes(category as PropertyType) ? (category as PropertyType) : undefined;
+    res.json(await getApprovedListnings(validCategory));
   } catch (error) {
     console.error('Fel vid hämtning av godkända annonser:', error);
     res.status(500).json({ message: 'Kunde inte hämta godkända annonser.' });
@@ -92,6 +105,7 @@ export const addListning = async (req: Request, res: Response) => {
     const guests = parseCount(req.body.guests);
     const bedrooms = parseCount(req.body.bedrooms);
     const bathrooms = parseCount(req.body.bathrooms);
+    const propertyType = parsePropertyType(req.body.propertyType, 'Lägenhet');
     const userId = req.user?.id;
 
     if (!title || !description || !location || !Number.isFinite(numericPrice) || numericPrice <= 0) {
@@ -144,6 +158,7 @@ export const addListning = async (req: Request, res: Response) => {
       bathrooms,
       amenities: parseAmenities(req.body.amenities),
       images,
+      propertyType,
     });
 
     res.status(201).json(listning);
@@ -188,6 +203,7 @@ export const editListning = async (req: Request, res: Response) => {
       return;
     }
 
+    const propertyType = parsePropertyType(req.body.propertyType, currentListning.propertyType ?? 'Lägenhet');
     const files = (req.files ?? []) as Express.Multer.File[];
     const uploadedImages: ListingImage[] = files.map((file) => ({
       id: file.filename,
@@ -236,6 +252,7 @@ export const editListning = async (req: Request, res: Response) => {
       bathrooms,
       amenities: parseAmenities(req.body.amenities),
       images,
+      propertyType,
       status: 'pending',
       adminFeedback: ''
     });
@@ -296,12 +313,8 @@ export const reviewListning = async (req: Request, res: Response) => {
 export const removeListning = async (req: Request, res: Response) => {
   try {
     const { reason } = req.body;
-    const adminId = req.user?.id;
-
-    if (!reason || String(reason).trim() === '') {
-      res.status(400).json({ message: 'En anledning måste anges vid borttagning.' });
-      return;
-    }
+    const currentUserId = req.user?.id;
+    const currentUserRole = req.user?.role;
 
     const currentListning = await findListning(req.params.id);
     if (!currentListning) {
@@ -309,23 +322,44 @@ export const removeListning = async (req: Request, res: Response) => {
       return;
     }
 
+    if (currentUserRole === 'host') {
+      if (currentListning.userId !== currentUserId) {
+        res.status(403).json({ message: 'Du kan endast ta bort dina egna annonser.' });
+        return;
+      }
+
+      if (currentListning.status !== 'rejected') {
+        res.status(403).json({ message: 'Du kan endast ta bort en nekad annons.' });
+        return;
+      }
+    }
+
+    const deletionReason = String(reason ?? '').trim() || (currentUserRole === 'host'
+      ? 'Värd tog bort sin egen nekade annons.'
+      : 'Annons borttagen.');
+
+    if (currentUserRole !== 'host' && deletionReason === '') {
+      res.status(400).json({ message: 'En anledning måste anges vid borttagning.' });
+      return;
+    }
+
     await AdminLog.create({
-      adminId,
+      adminId: currentUserId,
       action: 'DELETE_LISTING',
       targetId: req.params.id,
-      reason: String(reason).trim()
+      reason: deletionReason
     });
 
     // Send message to the host about the deletion
     if (currentListning.userId) {
       await Message.create({
-        sender: adminId as any,
+        sender: currentUserId as any,
         receiver: currentListning.userId as any,
         text: `Din annons har tagits bort från plattformen.`,
         type: 'listing_deleted',
         listingId: req.params.id,
         listingTitle: currentListning.title,
-        deletionReason: reason
+        deletionReason
       });
     }
 

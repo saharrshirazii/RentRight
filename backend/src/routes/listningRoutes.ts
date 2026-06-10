@@ -43,7 +43,7 @@ router.patch(
 router.delete(
     '/:id', 
     verifyToken, 
-    checkRole(['admin']),
+    checkRole(['host', 'admin']),
     removeListning
 );
 

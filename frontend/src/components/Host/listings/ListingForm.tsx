@@ -20,6 +20,7 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
   const [guests, setGuests] = useState(listing ? String(listing.guests ?? 1) : "1");
   const [bedrooms, setBedrooms] = useState(listing ? String(listing.bedrooms ?? 0) : "1");
   const [bathrooms, setBathrooms] = useState(listing ? String(listing.bathrooms ?? 0) : "1");
+  const [propertyType, setPropertyType] = useState<"Lägenhet" | "Radhus" | "Studio" | "Stuga" | "Villa">(listing?.propertyType ?? "Lägenhet");
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(listing?.amenities ?? ["Wifi"]);
   const [customAmenity, setCustomAmenity] = useState("");
   const [existingImages, setExistingImages] = useState<ListingImage[]>(listing?.images ?? []);
@@ -104,6 +105,7 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
     formData.append("guests", guests);
     formData.append("bedrooms", bedrooms);
     formData.append("bathrooms", bathrooms);
+    formData.append("propertyType", propertyType);
     formData.append("amenities", JSON.stringify(selectedAmenities));
     formData.append("keepImageIds", JSON.stringify(existingImages.map((image) => image.id)));
     
@@ -172,6 +174,17 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
         <label className="field field--wide">
           <span>Stad / Land</span>
           <input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Ex. Stockholm, Sverige" />
+        </label>
+
+        <label className="field">
+          <span>Typ av boende</span>
+          <select value={propertyType} onChange={(event) => setPropertyType(event.target.value as any)}>
+            <option value="Lägenhet">Lägenhet</option>
+            <option value="Radhus">Radhus</option>
+            <option value="Studio">Studio</option>
+            <option value="Stuga">Stuga</option>
+            <option value="Villa">Villa</option>
+          </select>
         </label>
 
         <label className="field">

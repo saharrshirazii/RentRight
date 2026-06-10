@@ -42,7 +42,32 @@ export const getConversation = async (req: Request, res: Response) => {
         res.status(500).json({message: "Serverfel"})
     }
 }
+export const deleteMessage = async (req: Request, res: Response) => {
+    try {
+        const currentUser: any = req.user?.id;
+        const messageId = req.params.id;
 
+        if (!currentUser || !messageId) {
+            return res.status(400).json({ message: 'Giltig inloggning och meddelande-ID krävs.' });
+        }
+
+        const message = await IMessage.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ message: 'Meddelandet hittades inte.' });
+        }
+
+        const isOwner = message.sender.toString() === currentUser.toString() || message.receiver.toString() === currentUser.toString();
+        if (!isOwner) {
+            return res.status(403).json({ message: 'Du kan inte ta bort det här meddelandet.' });
+        }
+
+        await message.deleteOne();
+        res.status(200).json({ success: true, message: 'Meddelandet har tagits bort.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Serverfel' });
+    }
+}
 export const getInbox = async (req: Request, res: Response) => {
     try{
 

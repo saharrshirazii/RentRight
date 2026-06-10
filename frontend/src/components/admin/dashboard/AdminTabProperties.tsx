@@ -45,6 +45,7 @@ export const AdminTabProperties: React.FC<AdminTabPropertiesProps> = ({ listings
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider">
                 <th className="p-4">Boende</th>
+                <th className="p-4">Typ</th>
                 <th className="p-4">Pris/natt</th>
                 <th className="p-4">Status</th>
                 <th className="p-4">Skapad</th>
@@ -77,6 +78,7 @@ export const AdminTabProperties: React.FC<AdminTabPropertiesProps> = ({ listings
                         </div>
                       </div>
                     </td>
+                    <td className="p-4 text-sm text-gray-700 font-semibold">{listing.propertyType || 'Lägenhet'}</td>
                     <td className="p-4 text-gray-900 font-semibold">{listing.price.toLocaleString('sv-SE')} kr</td>
                     <td className="p-4">
                       <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded font-semibold text-[11px]">

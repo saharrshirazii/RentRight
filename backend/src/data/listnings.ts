@@ -13,6 +13,7 @@ type CreateListningInput = {
   bathrooms: number;
   amenities: string[];
   images: ListingImage[];
+  propertyType?: 'Lägenhet' | 'Radhus' | 'Studio' | 'Stuga' | 'Villa';
   status?: 'pending' | 'approved' | 'needs_revision' | 'rejected';
   adminFeedback?: string;
 };
@@ -31,6 +32,7 @@ const toListning = (listning: IListning): Listning => ({
   bathrooms: listning.bathrooms ?? 0,
   amenities: listning.amenities,
   images: listning.images,
+  propertyType: listning.propertyType ?? 'Lägenhet',
   status: listning.status,
   adminFeedback: listning.adminFeedback,
   createdAt: listning.createdAt.toISOString(),
@@ -41,8 +43,17 @@ export const getListnings = async () => {
   return listnings.map(toListning);
 };
 
-export const getApprovedListnings = async () => {
-  const listnings = await ListningModel.find({ status: 'approved' }).sort({ createdAt: -1 });
+export const getApprovedListnings = async (propertyType?: 'Lägenhet' | 'Radhus' | 'Studio' | 'Stuga' | 'Villa') => {
+  const filter: any = { status: 'approved' };
+  if (propertyType) {
+    if (propertyType === 'Lägenhet') {
+      filter.$or = [{ propertyType: 'Lägenhet' }, { propertyType: { $exists: false } }];
+    } else {
+      filter.propertyType = propertyType;
+    }
+  }
+
+  const listnings = await ListningModel.find(filter).sort({ createdAt: -1 });
   return listnings.map(toListning);
 };
 
@@ -58,6 +69,7 @@ export const createListning = async (input: CreateListningInput) => {
     bathrooms: input.bathrooms,
     amenities: input.amenities,
     images: input.images,
+    propertyType: input.propertyType ?? 'Lägenhet',
     status: input.status,
     adminFeedback: input.adminFeedback,
   });

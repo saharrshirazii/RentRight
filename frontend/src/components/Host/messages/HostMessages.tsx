@@ -64,6 +64,34 @@ export const HostMessages: React.FC = () => {
     return <div className="p-8 text-center text-gray-400">Inga meddelanden än.</div>;
   }
 
+  const handleDeleteMessage = async (messageId: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Du måste vara inloggad för att radera meddelanden.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/messages/${messageId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || 'Kunde inte ta bort meddelandet.');
+      }
+
+      setMessages((currentMessages) => currentMessages.filter((message) => message._id !== messageId));
+    } catch (err) {
+      setError('Kunde inte ta bort meddelandet.');
+      console.error('Error deleting message:', err);
+    }
+  };
+
   return (
     <div className="space-y-3">
       {messages.map((message) => (
@@ -73,15 +101,28 @@ export const HostMessages: React.FC = () => {
             message.type === 'listing_deleted' ? 'border-red-200 bg-red-50' : 'border-gray-200'
           }`}
         >
-          <div className="flex justify-between items-start mb-2">
-            <span className={`text-xs font-semibold ${
-              message.type === 'listing_deleted' ? 'text-red-600' : 'text-indigo-600'
-            }`}>
-              {message.type === 'listing_deleted' ? '⚠️ Boende borttaget' : 'Meddelande från admin'}
-            </span>
-            <span className="text-xs text-gray-400">
-              {message.createdAt ? new Date(message.createdAt).toLocaleDateString('sv-SE') : 'N/A'}
-            </span>
+          <div className="flex justify-between items-start mb-2 gap-3">
+            <div>
+              <span className={`text-xs font-semibold ${
+                message.type === 'listing_deleted' ? 'text-red-600' : 'text-indigo-600'
+              }`}>
+                {message.type === 'listing_deleted' ? '⚠️ Boende borttaget' : 'Meddelande från admin'}
+              </span>
+              <div className="text-xs text-gray-400 mt-1">
+                {message.createdAt ? new Date(message.createdAt).toLocaleDateString('sv-SE') : 'N/A'}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="text-sm text-red-600 hover:text-red-800"
+              onClick={() => {
+                if (window.confirm('Vill du verkligen ta bort det här meddelandet?')) {
+                  void handleDeleteMessage(message._id);
+                }
+              }}
+            >
+              Ta bort
+            </button>
           </div>
 
           {message.type === 'listing_deleted' ? (

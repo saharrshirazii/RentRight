@@ -15,6 +15,7 @@ export interface IListning extends Document {
   bathrooms: number;
   amenities: string[];
   images: ListingImage[];
+  propertyType: 'Lägenhet' | 'Radhus' | 'Studio' | 'Stuga' | 'Villa';
   status: ListingStatus;
   adminFeedback?: string;
   createdAt: Date;
@@ -49,7 +50,12 @@ const ListningSchema = new Schema<IListning>(
     bathrooms: { type: Number, required: true, min: 0, max: 20 },
     amenities: { type: [String], default: [] },
     images: { type: [ListingImageSchema], default: [] },
-
+    propertyType: {
+      type: String,
+      enum: ['Lägenhet', 'Radhus', 'Studio', 'Stuga', 'Villa'],
+      default: 'Lägenhet',
+      required: true,
+    },
 
     status: {
       type: String,
