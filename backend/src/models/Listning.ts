@@ -8,9 +8,14 @@ export interface IListning extends Document {
   userId: Schema.Types.ObjectId;
   title: string;
   description: string;
+  location: string;
   price: number;
+  guests: number;
+  bedrooms: number;
+  bathrooms: number;
   amenities: string[];
   images: ListingImage[];
+  propertyType: 'Lägenhet' | 'Radhus' | 'Studio' | 'Stuga' | 'Villa';
   status: ListingStatus;
   adminFeedback?: string;
   createdAt: Date;
@@ -38,10 +43,19 @@ const ListningSchema = new Schema<IListning>(
     },
     title: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
+    location: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 1 },
+    guests: { type: Number, required: true, min: 1, max: 20 },
+    bedrooms: { type: Number, required: true, min: 0, max: 20 },
+    bathrooms: { type: Number, required: true, min: 0, max: 20 },
     amenities: { type: [String], default: [] },
     images: { type: [ListingImageSchema], default: [] },
-
+    propertyType: {
+      type: String,
+      enum: ['Lägenhet', 'Radhus', 'Studio', 'Stuga', 'Villa'],
+      default: 'Lägenhet',
+      required: true,
+    },
 
     status: {
       type: String,

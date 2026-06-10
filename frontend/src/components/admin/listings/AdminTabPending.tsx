@@ -97,7 +97,12 @@ export const AdminTabPending: React.FC<AdminTabPendingProps> = ({ listings, onRe
 
                   {/* Innehåll */}
                   <div className="p-4">
-                    <h4 className="font-bold text-gray-900 text-base line-clamp-1">{item.title}</h4>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="font-bold text-gray-900 text-base line-clamp-1">{item.title}</h4>
+                      <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-semibold">
+                        {item.propertyType || 'Lägenhet'}
+                      </span>
+                    </div>
                     <p className="text-xs text-gray-400 mt-1">ID: {currentId}</p>
                     <p className="text-xs text-gray-600 mt-2 line-clamp-3">
                       {item.description}

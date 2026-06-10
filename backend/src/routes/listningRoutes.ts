@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { addListning, editListning, listApprovedListnings, listListnings, removeListning, reviewListning } from '../controllers/listningController';
+import { addListning, editListning, getListning, listApprovedListnings, listListnings, removeListning, reviewListning } from '../controllers/listningController';
 import { uploadListingImages } from '../middleware/uploadMiddleware';
 import { verifyToken } from '../middleware/authMiddleware';
 import { checkRole } from '../middleware/roleMiddleware';
@@ -10,6 +10,8 @@ const router = Router();
 router.get('/approved', listApprovedListnings);
 
 router.get('/', listListnings);
+
+router.get('/:id', getListning);
 
 
 router.post(
@@ -41,7 +43,7 @@ router.patch(
 router.delete(
     '/:id', 
     verifyToken, 
-    checkRole(['admin']),
+    checkRole(['host', 'admin']),
     removeListning
 );
 

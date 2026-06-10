@@ -203,8 +203,12 @@ useEffect(() => {
       
       const response = await fetch(`${API_BASE_URL}/api/v1/listnings/${listingId}`, {
         method: "DELETE",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          "Content-Type": "application/json",
+        },
         credentials: 'include',
+        body: JSON.stringify({ reason: 'Värd tog bort nekad annons.' }),
       });
 
       if (!response.ok) {
@@ -308,6 +312,12 @@ useEffect(() => {
                       onCreate={() => setIsCreateOpen(true)}
                       onEdit={setEditingListing}
                       onView={setViewingListing}
+                      onDelete={(listing) => {
+                        const id = listing.id || listing._id;
+                        if (id) {
+                          void handleDeleteListing(id);
+                        }
+                      }}
                     />
                   )}
 

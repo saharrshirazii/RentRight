@@ -15,7 +15,12 @@ type ListingFormProps = {
 export default function ListingForm({ listing, mode, onCancel, onSaved }: ListingFormProps) {
   const [title, setTitle] = useState(listing?.title ?? "");
   const [description, setDescription] = useState(listing?.description ?? "");
+  const [location, setLocation] = useState(listing?.location ?? "");
   const [price, setPrice] = useState(listing ? String(listing.price) : "");
+  const [guests, setGuests] = useState(listing ? String(listing.guests ?? 1) : "1");
+  const [bedrooms, setBedrooms] = useState(listing ? String(listing.bedrooms ?? 0) : "1");
+  const [bathrooms, setBathrooms] = useState(listing ? String(listing.bathrooms ?? 0) : "1");
+  const [propertyType, setPropertyType] = useState<"Lägenhet" | "Radhus" | "Studio" | "Stuga" | "Villa">(listing?.propertyType ?? "Lägenhet");
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(listing?.amenities ?? ["Wifi"]);
   const [customAmenity, setCustomAmenity] = useState("");
   const [existingImages, setExistingImages] = useState<ListingImage[]>(listing?.images ?? []);
@@ -82,15 +87,25 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
     event.preventDefault();
     setError("");
 
-    if (!title.trim() || !description.trim() || Number(price) <= 0) {
-      setError("Fyll i titel, beskrivning och pris.");
+    if (!title.trim() || !description.trim() || !location.trim() || Number(price) <= 0) {
+      setError("Fyll i titel, stad/land, beskrivning och pris.");
+      return;
+    }
+
+    if (Number(guests) < 1 || Number(bedrooms) < 0 || Number(bathrooms) < 0) {
+      setError("Ange minst 1 gäst samt giltigt antal sovrum och badrum.");
       return;
     }
 
     const formData = new FormData();
     formData.append("title", title.trim());
     formData.append("description", description.trim());
+    formData.append("location", location.trim());
     formData.append("price", price);
+    formData.append("guests", guests);
+    formData.append("bedrooms", bedrooms);
+    formData.append("bathrooms", bathrooms);
+    formData.append("propertyType", propertyType);
     formData.append("amenities", JSON.stringify(selectedAmenities));
     formData.append("keepImageIds", JSON.stringify(existingImages.map((image) => image.id)));
     
@@ -154,6 +169,37 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
         <label className="field">
           <span>Pris per natt</span>
           <input min="1" type="number" value={price} onChange={(event) => setPrice(event.target.value)} placeholder="1450" />
+        </label>
+
+        <label className="field field--wide">
+          <span>Stad / Land</span>
+          <input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Ex. Stockholm, Sverige" />
+        </label>
+
+        <label className="field">
+          <span>Typ av boende</span>
+          <select value={propertyType} onChange={(event) => setPropertyType(event.target.value as any)}>
+            <option value="Lägenhet">Lägenhet</option>
+            <option value="Radhus">Radhus</option>
+            <option value="Studio">Studio</option>
+            <option value="Stuga">Stuga</option>
+            <option value="Villa">Villa</option>
+          </select>
+        </label>
+
+        <label className="field">
+          <span>Gäster</span>
+          <input min="1" type="number" value={guests} onChange={(event) => setGuests(event.target.value)} placeholder="4" />
+        </label>
+
+        <label className="field">
+          <span>Sovrum</span>
+          <input min="0" type="number" value={bedrooms} onChange={(event) => setBedrooms(event.target.value)} placeholder="2" />
+        </label>
+
+        <label className="field">
+          <span>Badrum</span>
+          <input min="0" type="number" value={bathrooms} onChange={(event) => setBathrooms(event.target.value)} placeholder="1" />
         </label>
 
         <label className="field field--wide">

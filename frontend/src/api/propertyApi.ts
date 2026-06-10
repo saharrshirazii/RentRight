@@ -51,8 +51,14 @@ export const getProperties = async (
     return await response.json();
 };
 
-export const getApprovedListings = async (): Promise<any[]> => {
-    const response = await fetch(`${LISTINGS_API_URL}/approved`);
+export const getApprovedListings = async (category?: string): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (category) {
+        params.append('propertyType', category);
+    }
+
+    const url = `${LISTINGS_API_URL}/approved${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await fetch(url);
     
     if (!response.ok) {
         throw new Error('Failed to fetch approved listings');

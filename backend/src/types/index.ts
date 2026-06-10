@@ -14,9 +14,14 @@ export type Listning = {
   userId: string;
   title: string;
   description: string;
+  location: string;
   price: number;
+  guests: number;
+  bedrooms: number;
+  bathrooms: number;
   amenities: string[];
   images: ListingImage[];
+  propertyType: 'Lägenhet' | 'Radhus' | 'Studio' | 'Stuga' | 'Villa';
   status: ListingStatus;
   adminFeedback?: string;
   createdAt: string;

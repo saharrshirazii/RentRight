@@ -72,6 +72,11 @@ export const AdminReviewModal: React.FC<AdminReviewModalProps> = ({ isOpen, onCl
               <input value={`${listing.price} kr`} disabled />
             </label>
 
+            <label className="field">
+              <span>Typ av boende</span>
+              <input value={listing.propertyType || 'Lägenhet'} disabled />
+            </label>
+
             <label className="field field--wide">
               <span>Beskrivning</span>
               <textarea value={listing.description} disabled rows={4} />
