@@ -190,6 +190,63 @@ const handleSwitchRole = async (e: React.MouseEvent) => {
     }
   };
 
+  const handleExportData = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch("http://localhost:3000/api/v1/privacy/export", {
+      method: "GET",
+      headers: { "Authorization": `Bearer ${token}`,
+    "Content-Type": "application/json" }
+    });
+    
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'min-data.json';
+      a.click();
+    } else {
+      alert("Kunde inte exportera data.");
+    }
+  } catch (error) {
+    console.error("Export error:", error);
+    alert("Ett fel uppstod vid export.");
+  }
+};
+
+const handleDeleteAccount = async () => {
+  if (!window.confirm("Är du säker? Detta raderar ditt konto permanent.")) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch("http://localhost:3000/api/v1/privacy/delete", {
+      method: "DELETE",
+      headers: { 
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json" // Bra vana att skicka med
+      }
+    });
+
+    if (response.ok) {
+      //Rensa token
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      setUserData(null);
+
+      //Ladda om sidan helt
+      window.location.href = "/"; 
+      
+    } else {
+      alert("Kunde inte radera kontot.");
+    }
+  } catch (error) {
+    console.error("Delete error:", error);
+    alert("Ett fel uppstod vid radering.");
+  }
+};
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -209,7 +266,7 @@ const handleSwitchRole = async (e: React.MouseEvent) => {
   useEffect(() => {
     const observerOptions = {
       root: null,
-      rootMargin: '-15% 0px -40% 0px',
+      rootMargin: '-20% 0px -50% 0px',
       threshold: [0, 0.5]
     };
 
@@ -222,7 +279,7 @@ const handleSwitchRole = async (e: React.MouseEvent) => {
     };
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);
-    const sections = ['messages', 'favorites', 'settings', 'security'];
+    const sections = ['messages', 'favorites', 'settings', 'security', 'integrity'];
     
     sections.forEach((id) => {
       const el = document.getElementById(id);
@@ -244,7 +301,7 @@ const handleSwitchRole = async (e: React.MouseEvent) => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    if (tab) setTimeout(() => scrollToSection(tab), 150);
+    if (tab) setTimeout(() => scrollToSection(tab), 500);
   }, []);
 
   const menuItems = [
@@ -252,6 +309,7 @@ const handleSwitchRole = async (e: React.MouseEvent) => {
     { id: 'favorites', label: 'Favoriter', icon: <HiHeart className="text-xl" /> },
     { id: 'settings', label: 'Inställningar', icon: <HiUser className="text-xl" /> },
     { id: 'security', label: 'Säkerhet', icon: <HiLockClosed className="text-xl" /> },
+    { id: 'integrity', label: 'Integritet', icon: <HiLockClosed className="text-xl" /> },
   ];
 
   return (
@@ -480,6 +538,46 @@ const handleSwitchRole = async (e: React.MouseEvent) => {
               )}
             </div>
           </section>
+
+<section id="integrity" className="scroll-mt-40 md:scroll-mt-32 mt-12">
+  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Integritet</h3>
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+    {/* Knapp för att exportera data */}
+    <div className="p-6 md:p-8 border border-gray-100 rounded-[1.5rem] hover:shadow-lg transition-all">
+      <div className="flex flex-col gap-4">
+        <div>
+          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1">GDPR</p>
+          <p className="text-gray-900 font-semibold text-base md:text-lg">Exportera din data</p>
+          <p className="text-gray-500 text-sm mt-1">Ladda ner en kopia av all din sparade information.</p>
+        </div>
+        <button 
+          onClick={handleExportData} 
+          className="bg-gray-900 text-white py-2 px-4 rounded-xl font-medium hover:bg-gray-800 transition-colors"
+        >
+          Exportera
+        </button>
+      </div>
+    </div>
+
+    {/* Knapp för att radera konto */}
+    <div className="p-6 md:p-8 border border-gray-100 rounded-[1.5rem] hover:shadow-lg transition-all">
+      <div className="flex flex-col gap-4">
+        <div>
+          <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-1">Konto</p>
+          <p className="text-gray-900 font-semibold text-base md:text-lg">Radera konto</p>
+          <p className="text-gray-500 text-sm mt-1">Detta är permanent och kan inte ångras.</p>
+        </div>
+        <button 
+          onClick={handleDeleteAccount} 
+          className="bg-red-50 text-red-600 py-2 px-4 rounded-xl font-medium hover:bg-red-100 transition-colors"
+        >
+          Radera konto
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+          
         </main>
       </div>
     </div>
