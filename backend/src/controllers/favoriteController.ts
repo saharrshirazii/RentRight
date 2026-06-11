@@ -9,26 +9,34 @@ interface PopulatedFavorite {
 }
 
 //HÄMTA ALLA FAVORITER - man måste vara inloggad för att kunna favoritmarkera och spara ett boende i sin lista
+// I favoriteController.ts
+
 export const getFavorites = async (req: Request, res: Response): Promise<void> => {
     try {
-        const userIdStr = req.user?.id;
-        if (!userIdStr) {
-            res.status(401).json({ message: "Du måste vara inloggad." });
-            return;
-        }
+        const userId = req.user?.id;
+        
+        // Populate mot 'Listning'
+        const favoriteDocs = await Favorite.find({ userId: userId }).populate('propertyId');
 
-        const userId = new Types.ObjectId(userIdStr);
-
-        // Vi sätter "as any" på sökobjektet - detta för att komma förbi vakten som annars ger oss felmarkeringar när vi söker efter userId
-        const favoriteDocs = await Favorite.find({ userId } as any).populate('propertyId') as unknown as PopulatedFavorite[];
-
+        // Mappa om datan så frontenden får det den förväntar sig
         const cleanProperties = favoriteDocs
             .filter(fav => fav.propertyId !== null)
-            .map(fav => fav?.propertyId);
+            .map((fav: any) => {
+                const p = fav.propertyId;
+                return {
+                    _id: p._id,
+                    title: p.title,
+                    location: p.location,
+                    pricePerNight: p.price, // Vi mappar om 'price' till 'pricePerNight'
+                    images: p.images.map((img: any) => img.url), // Säkerställer bild-URL
+                    guests: p.guests,
+                    bedrooms: p.bedrooms,
+                    bathrooms: p.bathrooms
+                };
+            });
 
         res.status(200).json({ success: true, data: cleanProperties });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: "Serverfel" });
     }
 };
@@ -36,21 +44,24 @@ export const getFavorites = async (req: Request, res: Response): Promise<void> =
 //SPARA EN FAVORIT
 export const addFavorite = async (req: Request, res: Response): Promise<void> => {
     try {
-        const userIdStr = req.user?.id;
+        const userId = req.user?.id;
         const { propertyId } = req.body;
 
-        if (!userIdStr || !propertyId) {
-            res.status(400).json({ message: "Giltig inloggning och fastighets-ID krävs." });
-            return;
-        }
+        console.log("Mottaget från frontend - PropertyID:", propertyId);
 
-        const userId = new Types.ObjectId(userIdStr);
+        // Skapa instans manuellt
+        const fav = new Favorite({
+            userId: new Types.ObjectId(userId),
+            propertyId: new Types.ObjectId(propertyId)
+        });
 
-        // "as any" här säkrar att .create inte klagar på userId - även här för att ta oss förbi en strikt säkerhetsvakt
-        const newFavorite = await Favorite.create({ userId, propertyId } as any);
-        res.status(201).json({ success: true, data: newFavorite });
+        // Tvinga fram sparande
+        const savedFav = await fav.save();
+        console.log("Sparad favorit i databasen:", savedFav);
+
+        res.status(201).json({ success: true, data: savedFav });
     } catch (error) {
-        console.error(error);
+        console.error("FEL VID SPARANDE:", error);
         res.status(500).json({ message: "Serverfel" });
     }
 };
