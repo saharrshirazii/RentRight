@@ -236,6 +236,14 @@ const handleNav = (tab: string) => {
                     >
                       Inställningar <span><IoIosArrowForward /></span>
                     </button>
+
+                    <button 
+        onClick={() => handleNav('integrity')} 
+        className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+      >
+        Integritet <span><IoIosArrowForward /></span>
+      </button>
+      
                     
                     <div className="border-t border-gray-100 my-1"></div>
                     

@@ -11,6 +11,7 @@ import errorHandler from './middleware/errorMiddleware';
 import { notFound } from './middleware/notfoundMiddleware';
 import { uploadDirectory } from './config/upload';
 import favoriteRoutes from './routes/favoriteRoutes';
+import privacyRoutes from './routes/privacyRoutes';
 
 const app: Application = express();
 
@@ -36,6 +37,7 @@ app.use('/api/v1/listnings', listningRoutes);
 app.use('/api/v1/bookings', bookingRouter);
 app.use('/api/v1/messages', messageRoutes);
 app.use('/api/v1/favorites', favoriteRoutes);
+app.use('/api/v1/privacy', privacyRoutes);
 
 
 app.get('/', (req: Request, res: Response) => {
