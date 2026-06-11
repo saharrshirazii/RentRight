@@ -1,8 +1,8 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IFavorite extends Document {
-    userId: Schema.Types.ObjectId;
-    propertyId: Schema.Types.ObjectId;
+    userId: Types.ObjectId;
+    propertyId: Types.ObjectId;
 }
 
 const favoriteSchema = new Schema<IFavorite>(
@@ -15,8 +15,8 @@ const favoriteSchema = new Schema<IFavorite>(
 
         propertyId:{
             type: Schema.Types.ObjectId, 
-            ref: 'Property',
-            required: true,
+            ref: 'Listning',
+            required: false,
         }
     }, 
 

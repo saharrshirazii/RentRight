@@ -209,6 +209,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           alert("Du måste vara inloggad för att kunna spara favoriter");
           return;
         }
+        
 
         const method = isFavorite? "DELETE" : "POST";
         const url = isFavorite
