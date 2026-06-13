@@ -55,7 +55,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onC
       )}
 
       {/* Image display */}
-      <div className='w-80 h-full overflow-hidden p-4 flex-shrink-0'>
+      <div className='w-80 h-full overflow-hidden p-4 shrink-0'>
         <img
           src={formatImgUrl(property?.images?.[0])}
           alt={property?.title || 'Boende bild'}
