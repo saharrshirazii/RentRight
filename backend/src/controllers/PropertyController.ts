@@ -7,7 +7,6 @@ import {logger} from './../logger/logger'
 
 
 
-
 //READ - GET /properties – get all properties
 export const getProperties = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -64,7 +63,8 @@ export const getProperties = async (req: Request, res: Response, next: NextFunct
                     endDate: {$gt : searchStart}
                 }).select('propertyId');
 
-                const busyPropertyIds = overlappingBookings.map(b => b.propertyId);
+
+                const busyPropertyIds = overlappingBookings.map((b: any) => b.PropertyId);
 
                 filter._id = {$nin: busyPropertyIds};
                 //INFO LOG

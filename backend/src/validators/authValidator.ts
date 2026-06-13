@@ -13,6 +13,8 @@ export const registerSchema = z.object({
     .toLowerCase()
     .trim(),
 
+    role: z.enum(['guest', 'host', 'admin']).default('guest'),
+
     password: z.string()
         .min(8, "Lösenordet måste vara minst 8 tecken långt")
         .max(30, "Lösenordet får max vara 30 tecken")

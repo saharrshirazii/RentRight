@@ -30,7 +30,7 @@ export default function ListingPreviewModal({ listing, onClose }: ListingPreview
       <div className="listing-preview__header">
         <div>
           <h2 id="view-listing-title">{listing.title}</h2>
-          <p>{listing.price.toLocaleString("sv-SE")} kr/natt</p>
+          <p>{listing.location || "Plats ej angiven"} · {listing.price.toLocaleString("sv-SE")} kr/natt</p>
         </div>
         <button type="button" className="ghost-button" onClick={onClose}>
           Stäng
@@ -85,6 +85,11 @@ export default function ListingPreviewModal({ listing, onClose }: ListingPreview
       ) : null}
 
       <p className="listing-preview__description">{listing.description}</p>
+      <div className="listing-card__meta">
+        <span>{listing.guests ?? 1} gäster</span>
+        <span>{listing.bedrooms ?? 0} sovrum</span>
+        <span>{listing.bathrooms ?? 0} badrum</span>
+      </div>
       <div className="listing-card__meta">
         {listing.amenities.map((amenity) => (
           <span key={amenity}>{amenity}</span>

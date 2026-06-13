@@ -20,6 +20,8 @@ const pinoHttp = require('pino-http');
 const crypto = require('crypto');
 
 
+import privacyRoutes from './routes/privacyRoutes';
+
 const app: Application = express();
 
 
@@ -42,7 +44,7 @@ app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:8080'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma']
 }));
 
 app.use(express.json());
@@ -61,6 +63,7 @@ app.use('/api/v1/listnings', listningRoutes);
 app.use('/api/v1/bookings', bookingRouter);
 app.use('/api/v1/messages', messageRoutes);
 app.use('/api/v1/favorites', favoriteRoutes);
+app.use('/api/v1/privacy', privacyRoutes);
 
 
 app.get('/', (req: Request, res: Response) => {

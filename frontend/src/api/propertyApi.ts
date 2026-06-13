@@ -1,6 +1,7 @@
 import { Property } from '../types/property';
 
 const API_URL = 'http://localhost:3000/api/v1/properties';
+const LISTINGS_API_URL = 'http://localhost:3000/api/v1/listnings';
 
 interface PropertiesResponse {
     status: string;
@@ -48,6 +49,22 @@ if (checkOut) {
 
     if (!response.ok) {
         throw new Error('Failed to fetch properties');
+    }
+
+    return await response.json();
+};
+
+export const getApprovedListings = async (category?: string): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (category) {
+        params.append('propertyType', category);
+    }
+
+    const url = `${LISTINGS_API_URL}/approved${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+        throw new Error('Failed to fetch approved listings');
     }
 
     return await response.json();

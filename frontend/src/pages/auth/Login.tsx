@@ -4,7 +4,7 @@ import Button from "../../components/Button/Button";
 import { useNavigate } from 'react-router-dom';
 
 interface LoginProps {
-  onToggle: () => void;
+  onToggle?: () => void;
 }
 
 function LogIn({ onToggle }: LoginProps) {
@@ -27,7 +27,13 @@ function LogIn({ onToggle }: LoginProps) {
       if (response.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/");
+        
+        // Redirect based on role
+        const targetPath = 
+          data.user.role === 'host' ? '/host' : 
+          data.user.role === 'admin' ? '/admin' : 
+          '/';
+        navigate(targetPath);
         window.location.reload();
       } else {
         // Hantera både specifika Zod-fel och generella felmeddelanden

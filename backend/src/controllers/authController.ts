@@ -19,7 +19,6 @@ export const register = async (req: Request, res: Response) => {
 
         //INFO LOG: High-value milestone tracking
         logger.info({ userId: user._id, email: user.email, role: user.role }, 'Ny användare har registrerats');
-
         res.status(201).json({
             token,
             user: { id: user._id.toString(), name: user.name, email: user.email, role: user.role }

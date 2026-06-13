@@ -25,6 +25,20 @@ body {
   min-height: 100vh;
 }
 
+button,
+button[type="submit"],
+a,
+[role="button"],
+.ghost-button,
+.primary-button,
+.tab-button,
+.quick-nav__item,
+.quick-nav__icon,
+.carousel__arrow,
+.carousel__dot {
+  cursor: pointer;
+}
+
 button {
   font: inherit;
 }
@@ -318,8 +332,28 @@ button {
 }
 
 .listing-badge {
+  background: transparent;
+  color: inherit;
+}
+
+.status-pill--approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-pill--pending {
   background: #fff5d7;
-  color: #b1831f;
+  color: #92400e;
+}
+
+.status-pill--needs-revision {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.status-pill--rejected {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .listing-card__location,
@@ -482,7 +516,7 @@ button {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: 100;
   display: grid;
   place-items: center;
   padding: 22px;
@@ -491,6 +525,8 @@ button {
 }
 
 .modal-panel {
+  position: relative;
+  z-index: 101;
   width: min(100%, 760px);
   max-height: calc(100vh - 44px);
   overflow-y: auto;

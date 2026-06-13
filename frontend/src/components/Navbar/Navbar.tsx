@@ -21,7 +21,6 @@ const Navbar = ({ setExperience, userData, setUserData } : NavbarProps) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [bookingCount, setBookingCount] = useState(0);
 
-  
 
   const closeAuthModal = () => {
     setIsLoginOpen(false);
@@ -80,7 +79,11 @@ const handleNav = (tab: string) => {
       <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white sticky top-0 z-50 transition-all">
         {/* Logo */}
 <a href="/" onClick={(e) => { e.preventDefault(); navigate('/'); }}>
-  <h1 className="text-2xl font-bold text-indigo-600 tracking-tight">
+  <h1 className={`text-2xl font-bold tracking-tight ${
+    showUser?.role === 'host' ? 'text-blue-600' : 
+    showUser?.role === 'admin' ? 'text-black' : 
+    'text-indigo-600'
+  }`}>
     RentRight
   </h1>
 </a>
@@ -101,7 +104,15 @@ const handleNav = (tab: string) => {
         {/* Desktop Menu */}
         <div className="hidden sm:flex items-center gap-8 font-medium text-gray-600">
           <div className="flex flex-wrap items-center justify-center">
-            <Toggle label="" initialState={true} />
+            <Toggle 
+              label="" 
+              initialState={true}
+              colorTheme={
+                showUser?.role === 'host' ? 'blue' :
+                showUser?.role === 'admin' ? 'black' :
+                'indigo'
+              }
+            />
           </div>
 
           {/* Search Bar */}
@@ -118,7 +129,7 @@ const handleNav = (tab: string) => {
           </div>
 
           {/* Cart/Notification Icon */}
-          {isLoggedIn && (
+          {!showUser || (showUser?.role !== 'host' && showUser?.role !== 'admin') ? (
           <div className="relative cursor-pointer hover:opacity-80 transition">
             <button onClick = {() => navigate('/my-bookings')}>
             <SlBasket size={25} className='text-indigo-500 font-bold'/>
@@ -127,6 +138,42 @@ const handleNav = (tab: string) => {
             </span>
             </button>
           </div>
+          ) : null}
+
+          {/* Host Navigation Buttons */}
+          {showUser?.role === 'host' && (
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => navigate('/')}
+                className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition"
+              >
+                Utforska
+              </button>
+              <button 
+                onClick={() => navigate('/host')}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+              >
+                Mina boenden
+              </button>
+            </div>
+          )}
+
+          {/* Admin Navigation Buttons */}
+          {showUser?.role === 'admin' && (
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => navigate('/')}
+                className="px-4 py-2 text-sm font-medium text-black border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+              >
+                Utforska
+              </button>
+              <button 
+                onClick={() => navigate('/admin')}
+                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition"
+              >
+                Kontrollpanel
+              </button>
+            </div>
           )}
 
           {showUser ? (
@@ -137,14 +184,28 @@ const handleNav = (tab: string) => {
                 className="flex items-center gap-3 border border-gray-300 rounded-full py-1 px-2 hover:shadow-md transition cursor-pointer bg-white"
               >
                 {showUser.role === 'admin' && (
-                  <span className="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold ml-1">
+                  <span className="bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold ml-1">
                     Admin
+                  </span>
+                )}
+                {showUser.role === 'host' && (
+                  <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold ml-1">
+                    Host
+                  </span>
+                )}
+                {(showUser.role !== 'admin' && showUser.role !== 'host') && (
+                  <span className="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold ml-1">
+                    Guest
                   </span>
                 )}
                 <span className="text-sm font-medium text-gray-700 ml-1">
                   Hej, {showUser.name.split(' ')[0]}
                 </span>
-                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner ${
+                  showUser?.role === 'host' ? 'bg-blue-600' : 
+                  showUser?.role === 'admin' ? 'bg-black' : 
+                  'bg-indigo-600'
+                }`}>
                   {showUser.name.charAt(0).toUpperCase()}
                 </div>
               </div>
@@ -173,6 +234,14 @@ const handleNav = (tab: string) => {
                     >
                       Inställningar <span><IoIosArrowForward /></span>
                     </button>
+
+                    <button 
+        onClick={() => handleNav('integrity')} 
+        className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+      >
+        Integritet <span><IoIosArrowForward /></span>
+      </button>
+      
                     
                     <div className="border-t border-gray-100 my-1"></div>
                     

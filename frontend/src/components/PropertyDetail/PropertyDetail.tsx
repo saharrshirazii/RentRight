@@ -4,6 +4,63 @@ import axios from 'axios'
 import { PropertyData } from '../../types/property'
 import Checkin from '../Checkin/Checkin'
 
+type ListingImage = {
+  id: string;
+  originalName: string;
+  filename: string;
+  mimetype: string;
+  size: number;
+  url: string;
+};
+
+type Listing = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  amenities: string[];
+  images: ListingImage[];
+  status: 'pending' | 'approved' | 'needs_revision' | 'rejected';
+  adminFeedback?: string;
+  createdAt: string;
+  rating?: number;
+  reviewsCount?: number;
+  location?: string;
+  owner?: {
+    name: string;
+    role?: string;
+  };
+  guests?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  category?: string;
+  reviewsList?: any[];
+};
+
+type PropertyDisplay = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  amenities: string[];
+  images: string[];
+  status: 'pending' | 'approved' | 'needs_revision' | 'rejected';
+  adminFeedback?: string;
+  createdAt: string;
+  rating?: number;
+  reviewsCount?: number;
+  location?: string;
+  owner?: {
+    name: string;
+    role?: string;
+  };
+  guests?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  category?: string;
+  reviewsList?: any[];
+};
+
 //type for our URL parameters
 interface PropertyParams {
   id: string;
@@ -13,7 +70,7 @@ export const PropertyDetail: React.FC = () => {
   const { id } = useParams<Params & { id: string }>();
   const navigate = useNavigate();
 
-  const [property, setProperty] = useState<PropertyData | null>(null);
+  const [property, setProperty] = useState<PropertyDisplay | null>(null);
   const [loading, setLoading] = useState<Boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,27 +118,44 @@ export const PropertyDetail: React.FC = () => {
     const fetchProperty = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:3000/api/v1/properties/${id}`);
-        if (response.data && response.data.data) {
-          //Fallback mockup lists for fileds not yet in our MongoDB model
-          const fetchedData = response.data.data;
+        const response = await axios.get(`http://localhost:3000/api/v1/listnings/${id}`);
+        if (response.data) {
+          const fetchedData = response.data;
+
+          // Check if listing is approved
+          if (fetchedData.status !== 'approved') {
+            setError('Detta boende är inte tillgängligt för tillfället.');
+            return;
+          }
+
+          // Convert ListingImage objects to URLs
+          const imageUrls = fetchedData.images?.map((img: ListingImage) => 
+            img.url?.startsWith('http') ? img.url : `http://localhost:3000${img.url}`
+          ) || [];
 
           // Fallback images array if your database record only has 1 image
-          const propertyImages = fetchedData.images?.length >= 5
-            ? fetchedData.images
+          const propertyImages = imageUrls.length >= 5
+            ? imageUrls
             : [
-              fetchedData.images[0] || 'https://via.placeholder.com/800x600',
-              fetchedData.images[1],
-              fetchedData.images[2],
-              fetchedData.images[3],
-              fetchedData.images[4],
+              imageUrls[0] || 'https://via.placeholder.com/800x600',
+              imageUrls[1] || 'https://via.placeholder.com/800x600',
+              imageUrls[2] || 'https://via.placeholder.com/800x600',
+              imageUrls[3] || 'https://via.placeholder.com/800x600',
+              imageUrls[4] || 'https://via.placeholder.com/800x600',
             ];
+
           setProperty({
             ...fetchedData,
             images: propertyImages,
-            reviewsCount: fetchedData.reviews || 2,
-            amenities: fetchedData.amenities || ['wifi', 'TV', 'KÖk', 'Arbetsplats', 'Parkering'],
-            reviewsList: fetchedData.reviewList || [
+            rating: fetchedData.rating || 4.5,
+            reviewsCount: fetchedData.reviewsCount || 2,
+            location: fetchedData.location || 'Sverige',
+            owner: fetchedData.owner || { name: 'Värd' },
+            guests: fetchedData.guests || 4,
+            bedrooms: fetchedData.bedrooms || 2,
+            bathrooms: fetchedData.bathrooms || 1,
+            category: fetchedData.category || 'Lägenhet',
+            reviewsList: fetchedData.reviewsList || [
               {
                 _id: '1',
                 author: 'Ulrika Karlsson',
@@ -117,7 +191,7 @@ export const PropertyDetail: React.FC = () => {
   // Helper function to format image sources safely
   const formatImgUrl = (url: string) => {
     if (!url) return 'https://via.placeholder.com/400';
-    return url.startsWith('http') ? url : `http://localhost:3000/assets/${url}`;
+    return url.startsWith('http') ? url : `http://localhost:3000${url}`;
   };
 
   if (loading) {
@@ -223,7 +297,7 @@ export const PropertyDetail: React.FC = () => {
                 <span>🚿 {property.bathrooms} badrum</span>
               </div>
               <p className="text-xs text-gray-700 mt-4 leading-relaxed">
-                Härligt och rymligt boende perfekt för avkoppling. Denna {property.category.toLowerCase()} erbjuder bra standard, bekväma sängar, och ett fullt utrustat utrymme för en fantastisk vistelse.
+                Härligt och rymligt boende perfekt för avkoppling. Denna {(property.category || 'Lägenhet').toLowerCase()} erbjuder bra standard, bekväma sängar, och ett fullt utrustat utrymme för en fantastisk vistelse.
               </p>
             </div>
 
@@ -273,7 +347,7 @@ export const PropertyDetail: React.FC = () => {
           <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-lg shadow-gray-100/50 sticky top-6">
             <div className="flex justify-between items-baseline mb-4">
               <div>
-                <span className="text-lg font-bold text-gray-900">{property.pricePerNight} kr</span>
+                <span className="text-lg font-bold text-gray-900">{property.price} kr</span>
                 <span className="text-gray-600 text-xs"> / natt</span>
               </div>
             </div>

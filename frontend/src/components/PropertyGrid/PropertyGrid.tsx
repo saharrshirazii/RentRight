@@ -1,18 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { StarIcon } from '@heroicons/react/20/solid';
-import { UserGroupIcon, HomeIcon, BeakerIcon } from '@heroicons/react/24/outline';
+import { BeakerIcon, HomeIcon, MapPinIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { Property } from '../../types/property';
 import { FilterCategories } from '../FilterCategories/FilterCategories';
-import { getProperties } from '../../api/propertyApi';
+import { getApprovedListings } from '../../api/propertyApi';
 import FilterSection from '../FilterSection/FilterSection';
 import Hero from '../Hero/Hero';
 import { HeroSearchBar } from '../HeroSearchBar/HeroSearchBar';
 import { HiHeart, HiOutlineHeart } from 'react-icons/hi';
 
+type ListingImage = {
+  id: string;
+  originalName: string;
+  filename: string;
+  mimetype: string;
+  size: number;
+  url: string;
+};
+
+type Listing = {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  price: number;
+  guests: number;
+  bedrooms: number;
+  bathrooms: number;
+  amenities: string[];
+  images: ListingImage[];
+  propertyType: 'Lägenhet' | 'Radhus' | 'Studio' | 'Stuga' | 'Villa';
+  status: 'pending' | 'approved' | 'needs_revision' | 'rejected';
+  adminFeedback?: string;
+  createdAt: string;
+};
+
 export default function PropertyGrid() {
   const { search } = useLocation(); 
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<Listing[]>([]);
 
   // Filter UI states
   const [category, setCategory] = useState('');
@@ -45,11 +70,17 @@ const checkOut = queryParams.get('checkOut') || "";
     const fetchProperties = async () => {
       setLoading(true);
       try {
-        const response = await getProperties(page, category, price, searchLocation, searchGuests, checkIn, checkOut);
-        if (response) {
-          setProperties(response.data);
-          setTotalPages(response.pagination?.totalPages || 1);
-          setTotalResults(response.pagination?.totalProperties || 0);
+// <<<<<<< HEAD
+//         const response = await getProperties(page, category, price, searchLocation, searchGuests, checkIn, checkOut);
+//         if (response) {
+//           setProperties(response.data);
+//           setTotalPages(response.pagination?.totalPages || 1);
+//           setTotalResults(response.pagination?.totalProperties || 0);
+        const approvedListings = await getApprovedListings(category);
+        if (approvedListings) {
+          setProperties(approvedListings);
+          setTotalResults(approvedListings.length);
+          setTotalPages(1);
         }
       } catch (err) {
         console.error("Fetch error:", err);
@@ -59,7 +90,9 @@ const checkOut = queryParams.get('checkOut') || "";
     };
 
     fetchProperties();
-  }, [page, category, price, searchLocation, searchGuests , checkIn, checkOut]); 
+  // }, [page, category, price, searchLocation, searchGuests , checkIn, checkOut]); 
+
+  }, [category]);
 
   return (
     <div>
@@ -95,7 +128,20 @@ const checkOut = queryParams.get('checkOut') || "";
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {properties.map((item) => (
-                <PropertyCard key={item._id} property={item} />
+              <PropertyCard 
+    key={item.id} 
+    property={{
+      ...item,
+      _id: item.id,
+      pricePerNight: item.price,
+      location: item.location || 'Sverige',
+      guests: item.guests ?? 1,
+      bedrooms: item.bedrooms ?? 0,
+      bathrooms: item.bathrooms ?? 0,
+      category: item.propertyType ?? 'Lägenhet',
+      images: item.images // SE TILL ATT DENNA RAD FINNS
+    } as unknown as Property} 
+  />
               ))}
             </div>
 
@@ -136,12 +182,19 @@ const checkOut = queryParams.get('checkOut') || "";
 const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   const [isFavorite, setIsFavorite] = useState(false);
 
-  const imageUrl = property.images?.[0]
-    ? `http://localhost:3000/assets/${property.images[0]}`
+  const imageUrl = property.images && property.images.length > 0
+    ? (typeof property.images[0] === 'string'
+      ? property.images[0]
+      : (property.images[0] as any).url?.startsWith('http')
+        ? (property.images[0] as any).url
+        : `http://localhost:3000${(property.images[0] as any).url}`)
     : 'https://via.placeholder.com/400';
 
     useEffect(() => {
       const checkFavoriteStatus = async () => {
+
+        if (!property || !property._id) return;
+
         try {
           const token = localStorage.getItem("token");
           if (!token) return; 
@@ -159,7 +212,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         }
         };
         checkFavoriteStatus();
-      }, [property._id]);
+      }, [property?._id]);
 
       const handleFavoriteClick = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -170,6 +223,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           alert("Du måste vara inloggad för att kunna spara favoriter");
           return;
         }
+        
 
         const method = isFavorite? "DELETE" : "POST";
         const url = isFavorite
@@ -197,14 +251,14 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   return (
     <div className="flex flex-col h-full group cursor-pointer bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300">
       <Link to={`/properties/${property._id}`} className='relative h-64 overflow-hidden block'>
+        <div className="absolute right-4 top-4 z-20 rounded-full bg-slate-900/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-white shadow-lg pointer-events-none">
+          {property.category}
+        </div>
         <img
           src={imageUrl}
           alt={property.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-[10px] font-bold uppercase">
-          {property.category}
-        </div>
       </Link>
 
       <div className="p-4 flex flex-col flex-grow">
@@ -212,25 +266,28 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           <Link to={`/properties/${property._id}`} className="hover:underline block flex-grow max-w-[80%]" >
             <h3 className="font-bold text-gray-900 truncate w-4/5">{property.title}</h3>
           </Link>
-          <div className="flex items-center gap-1">
-            <StarIcon className="h-4 w-4 text-yellow-500" />
-            <span className="text-xs font-bold">{property.rating}</span>
-            <span className="text-gray-400 text-xs">({property.reviews})</span>
-          </div>
         </div>
 
-        <p className="text-xs text-gray-500 mt-1">{property.location}</p>
+        <p className="text-xs text-gray-500 mt-1">{property.description?.substring(0, 100)}...</p>
 
-        <div className="flex items-center gap-4 mt-4 py-3 border-b border-gray-300 text-gray-500">
-          <div className="flex items-center gap-1 text-[11px]">
-            <UserGroupIcon className="h-4 w-4" /> {property.guests} gäster
-          </div>
-          <div className="flex items-center gap-1 text-[11px]">
-            <HomeIcon className="h-4 w-4" /> {property.bedrooms} sovrum
-          </div>
-          <div className="flex items-center gap-1 text-[11px]">
-            <BeakerIcon className="h-4 w-4" /> {property.bathrooms} badrum
-          </div>
+        <div className="mt-3 flex items-center gap-1 text-xs text-gray-500">
+          <MapPinIcon className="h-4 w-4 text-gray-400" />
+          <span className="truncate">{property.location || 'Sverige'}</span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-gray-600">
+          <span className="flex items-center gap-1 whitespace-nowrap">
+            <UserGroupIcon className="h-4 w-4 text-gray-400" />
+            {property.guests ?? 1} gäster
+          </span>
+          <span className="flex items-center gap-1 whitespace-nowrap">
+            <HomeIcon className="h-4 w-4 text-gray-400" />
+            {property.bedrooms ?? 0} sovrum
+          </span>
+          <span className="flex items-center gap-1 whitespace-nowrap">
+            <BeakerIcon className="h-4 w-4 text-gray-400" />
+            {property.bathrooms ?? 0} badrum
+          </span>
         </div>
 
       <div className='mt-4 flex justify-between items-center'>

@@ -1,6 +1,26 @@
-import { Listing } from "../../../types/listingtypes";
+import { Listing, ListingStatus } from "../../../types/listingtypes";
 
 const API_BASE_URL = "http://localhost:3000";
+
+const getStatusClass = (status: ListingStatus): string => {
+  switch (status) {
+    case 'pending': return 'status-pill--pending';
+    case 'approved': return 'status-pill--approved';
+    case 'needs_revision': return 'status-pill--needs-revision';
+    case 'rejected': return 'status-pill--rejected';
+    default: return 'status-pill--pending';
+  }
+};
+
+const getStatusLabel = (status: ListingStatus): string => {
+  switch (status) {
+    case 'pending': return 'Väntar på granskning';
+    case 'approved': return 'Godkänd';
+    case 'needs_revision': return 'Behöver komplettering';
+    case 'rejected': return 'Nekad';
+    default: return status;
+  }
+};
 
 type ListingsViewProps = {
   deletingListingId: string;
@@ -8,9 +28,9 @@ type ListingsViewProps = {
   isLoading: boolean;
   listings: Listing[];
   onCreate: () => void;
-  onDelete: (listingId: string) => void;
   onEdit: (listing: Listing) => void;
   onView: (listing: Listing) => void;
+  onDelete: (listing: Listing) => void;
 };
 
 export default function ListingsView({
@@ -19,9 +39,9 @@ export default function ListingsView({
   isLoading,
   listings,
   onCreate,
-  onDelete,
   onEdit,
   onView,
+  onDelete,
 }: ListingsViewProps) {
   if (isLoading) {
     return <div className="placeholder-card">Hämtar annonser...</div>;
@@ -54,6 +74,7 @@ export default function ListingsView({
         
         const currentListingId = listing.id || (listing as any)._id;
         const firstImage = listing.images && listing.images[0];
+        const status = listing.status || 'pending';
 
         return (
           <article key={currentListingId} className="listing-card">
@@ -94,17 +115,54 @@ export default function ListingsView({
                 <div>
                   <div className="listing-card__title-row">
                     <h2>{listing.title}</h2>
-                    <span className="listing-badge">Annons</span>
+                    <span className={`listing-badge ${getStatusClass(status)}`}>
+                      {getStatusLabel(status)}
+                    </span>
                   </div>
-                  <p className="listing-card__location">
-                    {listing.images ? listing.images.length : 0} bilder uppladdade
-                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginTop: '10px' }}>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '4px 10px',
+                      borderRadius: '999px',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      backgroundColor: '#eef2ff',
+                      color: '#3730a3'
+                    }}>
+                      {listing.propertyType ?? 'Lägenhet'}
+                    </span>
+                    <p className="listing-card__location" style={{ margin: 0 }}>
+                      {listing.location || "Plats ej angiven"} · {listing.images ? listing.images.length : 0} bilder uppladdade
+                    </p>
+                  </div>
                 </div>
 
                 <div className="listing-card__price">{listing.price.toLocaleString("sv-SE")} kr/natt</div>
               </div>
 
               <p className="listing-card__description">{listing.description}</p>
+
+              <div className="listing-card__meta">
+                <span>{listing.guests ?? 1} gäster</span>
+                <span>{listing.bedrooms ?? 0} sovrum</span>
+                <span>{listing.bathrooms ?? 0} badrum</span>
+              </div>
+
+              {listing.adminFeedback && (
+                <div style={{
+                  backgroundColor: '#fef3c7',
+                  border: '1px solid #fcd34d',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  marginTop: '12px',
+                  fontSize: '14px',
+                  color: '#92400e'
+                }}>
+                  <strong>Feedback från admin:</strong> {listing.adminFeedback}
+                </div>
+              )}
 
               <div className="listing-card__meta">
                 {listing.amenities && listing.amenities.map((item) => (
@@ -116,18 +174,31 @@ export default function ListingsView({
                 <button type="button" className="ghost-button" onClick={() => onView(listing)}>
                   Visa
                 </button>
-                <button type="button" className="ghost-button" onClick={() => onEdit(listing)}>
+                <button 
+                  type="button" 
+                  className="ghost-button" 
+                  onClick={() => onEdit(listing)}
+                  disabled={status === 'approved'}
+                  style={{ opacity: status === 'approved' ? 0.5 : 1 }}
+                >
                   Redigera
                 </button>
-                <button
-                  type="button"
-                  className="ghost-button ghost-button--danger"
-                 
-                  disabled={deletingListingId === currentListingId}
-                  onClick={() => onDelete(currentListingId)}
-                >
-                  {deletingListingId === currentListingId ? "Tar bort..." : "Ta bort"}
-                </button>
+                {status === 'rejected' && (
+                  <button
+                    type="button"
+                    className="danger-button"
+                    onClick={() => {
+                      const shouldDelete = window.confirm(`Är du säker på att du vill ta bort listingen "${listing.title}"?`);
+                      if (shouldDelete) {
+                        onDelete(listing);
+                      }
+                    }}
+                    disabled={deletingListingId === currentListingId}
+                    style={{ marginLeft: '12px' }}
+                  >
+                    {deletingListingId === currentListingId ? 'Tar bort...' : 'Ta bort'}
+                  </button>
+                )}
               </div>
             </div>
           </article>

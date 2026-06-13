@@ -1,4 +1,5 @@
 // import express,  { Response, type Application, type Request } from 'express';
+import 'dotenv/config';
 import dotenv from 'dotenv';
 import app from './app';
 import { connectToDatabase } from './config/database';

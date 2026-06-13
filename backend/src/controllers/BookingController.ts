@@ -4,6 +4,7 @@ import Property from "../models/Property";
 import User from "../models/User";
 import { sendBookingConfirmation, sendPaymentConfirmation } from "../config/nodemailer";
 import {logger} from './../logger/logger'
+import mongoose from 'mongoose';
 
 
 //Get /v1/bookings/:id - get booking for property
@@ -303,4 +304,21 @@ export const cancelBooking = async (req: Request, res: Response, next: NextFunct
         logger.error({ err: error.message, bookingId: req.params.id }, "Fel vid bearbetning av bokningsavbokningssekvens");
         next(error);
     }
+//     if (booking.userId !== req.user?.id) {
+//       res.status(403).json({ status: 'fail', message: 'Du kan bara avboka dina egna resor.' });
+//       return;
+//     }
+
+//     if (new Date(booking.startDate) < new Date()) {
+//       res.status(400).json({ status: 'fail', message: 'Du kan inte avboka en resa som redan påbörjats.' });
+//       return;
+//     }
+
+//     booking.status = 'canceled';
+//     await booking.save();
+
+//     res.status(200).json({ status: 'success', message: 'Bokningen har avbokats.', data: booking });
+//   } catch (error) {
+//     next(error);
+//   }
 };
