@@ -10,7 +10,7 @@ export interface BookingData {
   startDate: string;
   endDate: string;
   totalPrice: number;
-  status: 'confirmed' | 'pending' | 'cancelled';
+  status: 'confirmed' | 'pending' | 'canceled';
   propertyId: {
     _id: string;
     title: string;
