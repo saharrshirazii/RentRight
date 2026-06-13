@@ -7,8 +7,6 @@ export const CheckoutPage: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [property, setProperty] = useState<Property | null>(null);
-    const bookingId = (location.state as any)?.bookingId;
-    
 
 
 
@@ -20,10 +18,10 @@ export const CheckoutPage: React.FC = () => {
     } = (location.state as any) || {};
 
     useEffect(() => {
-  fetch(`http://localhost:3000/api/v1/properties/${id}`)
-    .then(res => res.json())
-    .then(data => setProperty(data.data)); 
-}, [id]);
+        fetch(`http://localhost:3000/api/v1/properties/${id}`)
+            .then(res => res.json())
+            .then(data => setProperty(data.data));
+    }, [id]);
 
     //match Processing calculations
     const start = checkIn ? new Date(checkIn) : null;
@@ -50,41 +48,41 @@ export const CheckoutPage: React.FC = () => {
 
 
 
-    // const handlePayment = async () => {
-    //     try {
-    //         alert('Betalning genomförd!');
-    //         navigate("/payment-success");
-    //     } catch (error) {
-    //         console.error('Betalningsfel:', error);
-    //     }
-    // };
-   const handlePayment = async () => {
+    const handlePayment = async () => {
   try {
     const token = localStorage.getItem("token");
 
     const response = await fetch(
-      `http://localhost:3000/api/v1/bookings/${bookingId}/pay`,
+      "http://localhost:3000/api/v1/bookings",
       {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({
+          propertyId: id,
+          checkIn,
+          checkOut,
+        }),
       }
     );
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message);
+      alert(data.message); 
+      return;
     }
 
-    navigate("/payment-success");
+    alert("Betalning genomförd!");
+    navigate("/my-bookings");
 
   } catch (error) {
-    console.error("Payment error:", error);
+    console.error("Booking error:", error);
+    alert("Något gick fel");
   }
 };
-
 
     return (
         <div className="max-w-3xl mx-auto px-6 py-12">
@@ -108,12 +106,12 @@ export const CheckoutPage: React.FC = () => {
                         </h2>
 
                         <div className="flex justify-between py-2">
-                            <span>Bokning pris</span>
+                            <span>Bokning</span>
                             <span>{rawBasePrice} kr</span>
                         </div>
 
                         <div className="flex justify-between py-2">
-                            <span>Serviceavgift (10%)</span>
+                            <span>Serviceavgift</span>
                             <span>{serviceFee} kr</span>
                         </div>
 
