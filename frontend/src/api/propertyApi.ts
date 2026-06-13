@@ -16,12 +16,7 @@ interface PropertiesResponse {
 }
 
 export const getProperties = async (
-    page: number,
-    category: string,
-    price: string,
-    location?: string, 
-    guests?: string    
-): Promise<PropertiesResponse> => {
+page: number, category: string, price: string, location?: string, guests?: string, checkIn?: string | null, checkOut?: string | null): Promise<PropertiesResponse> => {
    
     const params = new URLSearchParams();
     params.append('page', page.toString());
@@ -38,6 +33,14 @@ export const getProperties = async (
     if (guests) {
         params.append('guests', guests);
     }
+
+    if (checkIn) {
+    params.append('checkIn', checkIn);
+}
+
+if (checkOut) {
+    params.append('checkOut', checkOut);
+}
 
     const url = `${API_URL}?${params.toString()}`;
 

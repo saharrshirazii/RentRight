@@ -1,13 +1,14 @@
 import mongoose , {Schema , Document} from 'mongoose';
 
 export interface IBooking extends Document {
-    PropertyId : mongoose.Types.ObjectId | string;
-    userId: string;
-    startDate: Date;
-    endDate: Date;
-    totalPrice: number;
-    status: 'Pending' | 'confirmed' | 'canceled';
-    createAt: Date;
+  propertyId: mongoose.Types.ObjectId | string;
+  userId: string;
+  startDate: Date;
+  endDate: Date;
+  totalPrice: number;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  paymentStatus: 'unpaid' | 'paid';
+  createdAt: Date;
 }
 
 const BookingSchema: Schema = new Schema (
@@ -38,6 +39,11 @@ const BookingSchema: Schema = new Schema (
         type: String,
         enum: ['pending' , 'confirmed' , 'cancelled'],
         default: 'confirmed',
+    },
+    paymentStatus:{
+        type: String,
+        enum: ['unpaid' , 'paid'],
+        default: 'unpaid',
     },
 },
 {

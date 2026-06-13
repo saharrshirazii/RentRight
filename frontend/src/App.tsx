@@ -10,9 +10,8 @@ import BookingConfirmation from './components/BookingConfirmation/BookingConfirm
 import { MyBookings } from "./components/guest/MyBookings/MyBookings";
 import { CheckoutPage } from "./components/guest/MyBookings/CheckoutPage";
 import Login from "./pages/auth/Login"
-import { PropertyDetail } from "./components/PropertyDetail/PropertyDetail";
-import BookingConfirmation from './components/BookingConfirmation/BookingConfirmation';
 import ProfilePage from "./pages/profile/ProfilePage";
+import {PaymentSuccessPage} from "./components/guest/MyBookings/PaymentSuccessPage"
 
 // VÄRD-KOMPONENTER
 import ListingForm from "./components/Host/listings/ListingForm";
@@ -222,6 +221,7 @@ const App: React.FC = () => {
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/properties/:id/checkout" element={<CheckoutPage />} />
         <Route path="/login" element={<Login/>}/>
+        <Route path="/payment-success" element={<PaymentSuccessPage />} />
 
         
         

@@ -11,6 +11,7 @@ export interface BookingData {
   endDate: string;
   totalPrice: number;
   status: 'confirmed' | 'pending' | 'cancelled';
+  paymentStatus: 'paid' | 'unpaid';
   propertyId: {
     _id: string;
     title: string;
@@ -108,6 +109,15 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onC
 
             {/* Total Price positioned flawlessly on the right edge */}
             <div className="text-right grid grid-col-2 items-baseline gap-2">
+              {booking.paymentStatus === "paid" ? (
+  <span className="text-green-600 font-bold">
+    Betald
+  </span>
+) : (
+  <span className="text-orange-500 font-bold">
+    Ej betald
+  </span>
+)}
               <div>
                 <span className="text-sm  text-gray-400 font-bold tracking-wider">Totalpris:</span>
                 <span className="text-base font-black text-gray-900">{totalPrice.toLocaleString()} kr</span>
@@ -117,6 +127,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onC
                   onClick={() =>
                     navigate(`/properties/${property._id}/checkout`, {
                       state: {
+                        bookingId: booking._id,
                         checkIn: startDate,
                         checkOut: endDate,
                         guestsCount: property.guests

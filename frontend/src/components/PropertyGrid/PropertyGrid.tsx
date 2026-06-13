@@ -25,9 +25,15 @@ export default function PropertyGrid() {
   const [totalResults, setTotalResults] = useState(0);
 
   // Parse URL search parameters safely
-  const queryParams = new URLSearchParams(search);
+const queryParams = React.useMemo(() => {
+  return new URLSearchParams(search);
+}, [search]);
+  const checkIn = queryParams.get('checkIn') || "";
+const checkOut = queryParams.get('checkOut') || "";
   const searchLocation = queryParams.get('location') || '';
   const searchGuests = queryParams.get('guests') || '';
+
+
 
   // Reset page to 1 whenever a filter or a new query string is processed
   useEffect(() => {
@@ -39,7 +45,7 @@ export default function PropertyGrid() {
     const fetchProperties = async () => {
       setLoading(true);
       try {
-        const response = await getProperties(page, category, price, searchLocation, searchGuests);
+        const response = await getProperties(page, category, price, searchLocation, searchGuests, checkIn, checkOut);
         if (response) {
           setProperties(response.data);
           setTotalPages(response.pagination?.totalPages || 1);
@@ -53,7 +59,7 @@ export default function PropertyGrid() {
     };
 
     fetchProperties();
-  }, [page, category, price, searchLocation, searchGuests]); 
+  }, [page, category, price, searchLocation, searchGuests , checkIn, checkOut]); 
 
   return (
     <div>

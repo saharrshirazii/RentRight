@@ -20,7 +20,6 @@ const Navbar = ({ setExperience, userData, setUserData } : NavbarProps) => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [bookingCount, setBookingCount] = useState(0);
-  const navigate = useNavigate();
 
   
 
