@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
-import { getProperties } from '../../api/propertyApi'
+
 import { Property } from '../../types/property';
 import CheckIn from '../Checkin/Checkin';
 import { GiConfirmed } from 'react-icons/gi';
@@ -56,23 +56,22 @@ export default function BookingConfirmation() {
             }
 
             try {
-                const url = `http://localhost:3000/api/v1/properties/${id}`;
-                console.log("Fetching from full URL:", url); // 🔍 Debug log 2
-
+                        const url = `http://localhost:3000/api/v1/listnings/${id}`;
                 const response = await fetch(url);
-                console.log("HTTP Response Status:", response.status); // 🔍 Debug log 3
+
+                if (!response.ok) {
+                  const errorBody = await response.json().catch(() => null);
+                  throw new Error(errorBody?.message || `Kunde inte hämta boendet (${response.status}).`);
+                }
 
                 const json = await response.json();
-                console.log("Raw JSON response body received:", json); // 🔍 Debug log 4
 
-                // Handle both wrapped payloads and raw direct objects safely:
                 if (json.status === 'success' && json.data) {
                     setProperty(json.data);
                 } else if (json._id || json.id) {
-                    // Fallback if your backend sends the property directly without a data wrapper
                     setProperty(json);
                 } else {
-                    console.warn("Received JSON data structure did not match expected layout keys.");
+                    throw new Error('Ogiltigt svarkort fr?n backend.');
                 }
             } catch (err) {
                 console.error("Network fetch operation threw an exception:", err);
@@ -88,7 +87,7 @@ export default function BookingConfirmation() {
     const end = new Date(initialCheckOut);
     const totalNights = property && start < end ? Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
-    const rawBasePrice = property ? totalNights * property.pricePerNight : 0;
+    const rawBasePrice = property ? totalNights * (property.pricePerNight ?? property.price ?? 0) : 0;
     const serviceFee = Math.round(rawBasePrice * 0.10); //10% service charch
     const totalFinalPrice = rawBasePrice + serviceFee;
 
@@ -239,7 +238,7 @@ export default function BookingConfirmation() {
                 <div className="lg:col-span-1">
                     <div className="sticky top-6 border border-gray-300 bg-white rounded-2xl shadow-sm overflow-hidden p-6 mt-15 space-y-6">
                         <div className="flex gap-4">
-                            <img src={`http://localhost:3000/assets/${property.images?.[0]}`} alt={property.title} className="w-24 h-24 object-cover rounded-xl" />
+                            <img src={formatImgUrl(typeof property.images?.[0] === 'string' ? property.images[0] : (property.images[0] as any)?.url)} alt={property.title} className="w-24 h-24 object-cover rounded-xl" />
                             <div>
                                 <h3 className="font-bold text-gray-900 leading-tight">{property.title}</h3>
                                 <p className="text-xs text-gray-400 mt-1">{property.location}</p>
@@ -268,7 +267,7 @@ export default function BookingConfirmation() {
 
                         <div className="space-y-2 text-sm text-gray-600">
                             <div className="flex justify-between">
-                                <span>{property.pricePerNight} kr x {totalNights} nätter</span>
+                                <span>{(property.pricePerNight ?? property.price ?? 0)} kr x {totalNights} nätter</span>
                                 <span className="font-medium text-gray-900">{rawBasePrice} kr</span>
                             </div>
                             <div className="flex justify-between">
@@ -288,7 +287,7 @@ export default function BookingConfirmation() {
             </div>
             {/* Success Modal Overply Component */}
             {showSuccessModal && (
-                <div className='fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[1000] p-4'>
+                <div className='fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-1000 p-4'>
                     <div className='bg-white rounded-2xl relative'>
                         {/* Close Button X */}
                         <button

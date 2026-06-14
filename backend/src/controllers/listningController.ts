@@ -46,6 +46,31 @@ const parseKeepImageIds = (value: unknown) => {
   }
 };
 
+const parseAvailability = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        const startDate = new Date((item as any).startDate);
+        const endDate = new Date((item as any).endDate);
+        return isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate >= endDate
+          ? null
+          : { startDate: startDate.toISOString(), endDate: endDate.toISOString() };
+      })
+      .filter(Boolean) as { startDate: string; endDate: string }[];
+  }
+
+  if (typeof value !== 'string') {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return parseAvailability(parsed);
+  } catch {
+    return [];
+  }
+};
+
 const parseCount = (value: unknown) => {
   const count = Number(value);
   return Number.isInteger(count) ? count : NaN;
@@ -159,6 +184,7 @@ export const addListning = async (req: Request, res: Response) => {
       amenities: parseAmenities(req.body.amenities),
       images,
       propertyType,
+      availability: parseAvailability(req.body.availability),
     });
 
     res.status(201).json(listning);
@@ -253,6 +279,10 @@ export const editListning = async (req: Request, res: Response) => {
       amenities: parseAmenities(req.body.amenities),
       images,
       propertyType,
+      availability:
+        req.body.availability !== undefined
+          ? parseAvailability(req.body.availability)
+          : currentListning.availability,
       status: 'pending',
       adminFeedback: ''
     });

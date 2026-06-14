@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import Booking from '../models/Booking';
-import Property, { IProperty } from '../models/property';
+import Listning, { IListning } from '../models/Listning';
 import mongoose from 'mongoose';
 
 
@@ -43,9 +43,9 @@ export const createBooking = async(req: Request , res: Response , next:NextFunct
             return;
         }
 
-        const property = await Property.findById<IProperty>(propertyId);
+        const listing = await Listning.findById<IListning>(propertyId);
 
-        if(!property) {
+        if (!listing) {
             res.status(404).json({
                 status: 'fail',
                 message: 'Boendet hittades inte.'
@@ -53,8 +53,30 @@ export const createBooking = async(req: Request , res: Response , next:NextFunct
             return;
         }
 
+        if (listing.status !== 'approved') {
+            res.status(400).json({
+                status: 'fail',
+                message: 'Boendet är inte tillgängligt för bokning.'
+            });
+            return;
+        }
+
+        if (listing.availability && listing.availability.length > 0) {
+            const isWithinAvailableRange = listing.availability.some((range) => {
+                return start >= new Date(range.startDate) && end <= new Date(range.endDate);
+            });
+
+            if (!isWithinAvailableRange) {
+                res.status(400).json({
+                    status: 'fail',
+                    message: 'Boendet är inte tillgängligt för alla valda datum.'
+                });
+                return;
+            }
+        }
+
         const totalNights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        const totalPrice = totalNights * property.pricePerNight;
+        const totalPrice = totalNights * listing.price;
 
         const newBooking = await Booking.create({
             propertyId: new mongoose.Types.ObjectId(propertyId),
@@ -82,7 +104,7 @@ export const getMyBookings = async (req:Request , res:Response, next:NextFunctio
         const bookings = await Booking.find({userId})
         .populate({
             path: 'propertyId',
-            select: 'title location images pricePerNight'
+            select: 'title location images price'
         })
         .sort('-createdAt');
 
@@ -106,13 +128,13 @@ export const getHostBookings = async (req: Request , res: Response , next: NextF
             return;
         }
 
-        const hostProperties = await Property.find({ owner: new mongoose.Types.ObjectId(hostId) }).select('_id');
-        const propertyIds = hostProperties.map((property) => property._id);
+        const hostListings = await Listning.find({ userId: new mongoose.Types.ObjectId(hostId) }).select('_id');
+        const propertyIds = hostListings.map((listing) => listing._id);
 
         const bookings = await Booking.find({ propertyId: { $in: propertyIds } })
             .populate({
                 path: 'propertyId',
-                select: 'title location images pricePerNight'
+                select: 'title location images price'
             })
             .populate({
                 path: 'userId',

@@ -15,7 +15,7 @@ const BookingSchema: Schema = new Schema (
 {
     propertyId: {
         type: Schema.Types.ObjectId,
-        ref: 'Property',
+        ref: 'Listning',
         required: [true , 'En bokning måste vara kopplad till ett boende.'],
     },
     userId: {
