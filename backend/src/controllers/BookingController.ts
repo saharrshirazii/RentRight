@@ -1,15 +1,37 @@
 import { Request, Response, NextFunction } from 'express';
 import Booking from '../models/Booking';
-import Listning, { IListning } from '../models/Listning';
+import Property from '../models/Property';
+import User from '../models/User';
+import { sendBookingConfirmation, sendPaymentConfirmation } from '../config/nodemailer';
+import { logger } from './../logger/logger';
 import mongoose from 'mongoose';
 
+export const getBookingsForProperty = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { propertyId } = req.params;
+        logger.info({ propertyId }, "Hämtar icke-avbokade bokningar för fastighetens tidslinje");
+        const bookings = await Booking.find({
+            propertyId,
+            status: { $ne: "cancelled" }
+        }).select("startDate endDate");
 
-//POST /bookings - create a new booking
-export const createBooking = async(req: Request , res: Response , next:NextFunction): Promise<void> => {
-    try{
-        const {propertyId , checkIn , checkOut} = req.body;
+        res.status(200).json({
+            status: "success",
+            results: bookings.length,
+            data: bookings
+        });
+    } catch (error: any) {
+        logger.error({ err: error.message, propertyId: req.params.propertyId }, "Fel vid hämtning av bokningar för boendet");
+        next(error);
+    }
+};
 
-        const userId = req.user?.id;
+export const createBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { propertyId, checkIn, checkOut } = req.body;
+        const userId = (req as any).user.id;
+
+        logger.info({ userId, propertyId, checkIn, checkOut }, "Initierad begäran om att skapa en bokning");
 
         if (!userId) {
             res.status(401).json({ status: 'fail', message: 'Du måste vara inloggad för att boka.' });
@@ -19,41 +41,43 @@ export const createBooking = async(req: Request , res: Response , next:NextFunct
         const start = new Date(checkIn);
         const end = new Date(checkOut);
 
-        if(start >= end){
+        if (start >= end) {
+            logger.warn({ userId, checkIn, checkOut }, "Bokningen misslyckades – incheckningsdatumet är efter utcheckningen.");
             res.status(400).json({
-                status: 'fail',
-                message: 'Incheckningsdatum måste vara före utcheckning.'
+                status: "fail",
+                message: "Incheckning måste vara före utcheckning.",
             });
             return;
         }
 
-        // Overlap availability check
-        const conflictiongBooking = await Booking.findOne({
+        const conflict = await Booking.findOne({
             propertyId,
-            status: {$ne : 'canceled'},
-            startDate: {$lt: end},
-            endDate: {$gt: start}
+            status: { $ne: "cancelled" },
+            startDate: { $lt: end },
+            endDate: { $gt: start },
         });
 
-        if(conflictiongBooking){
-            res.status(400).json({
-                status: 'fail',
-                message: 'Boendet är tyvärr redan bokat under dessa datum.'
+        if (conflict) {
+            logger.warn({ propertyId, checkIn, checkOut, conflictId: conflict._id }, "Bokningen misslyckades - Datumöverlappning/konflikt hittades.");
+            res.status(409).json({
+                status: "fail",
+                message: "Boendet är redan bokat.",
             });
             return;
         }
 
-        const listing = await Listning.findById<IListning>(propertyId);
+        const property = await Property.findById(propertyId);
 
-        if (!listing) {
+        if (!property) {
+            logger.warn({ propertyId }, "Bokningen misslyckades – Målfastigheten finns inte");
             res.status(404).json({
-                status: 'fail',
-                message: 'Boendet hittades inte.'
+                status: "fail",
+                message: "Boendet hittades inte.",
             });
             return;
         }
 
-        if (listing.status !== 'approved') {
+        if ((property as any).status !== 'approved') {
             res.status(400).json({
                 status: 'fail',
                 message: 'Boendet är inte tillgängligt för bokning.'
@@ -61,8 +85,8 @@ export const createBooking = async(req: Request , res: Response , next:NextFunct
             return;
         }
 
-        if (listing.availability && listing.availability.length > 0) {
-            const isWithinAvailableRange = listing.availability.some((range) => {
+        if ((property as any).availability && (property as any).availability.length > 0) {
+            const isWithinAvailableRange = (property as any).availability.some((range: any) => {
                 return start >= new Date(range.startDate) && end <= new Date(range.endDate);
             });
 
@@ -75,51 +99,129 @@ export const createBooking = async(req: Request , res: Response , next:NextFunct
             }
         }
 
-        const totalNights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        const totalPrice = totalNights * listing.price;
+        const totalNights = Math.ceil(
+            (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        const pricePerNight = (property as any).pricePerNight || (property as any).price || 0;
+        const totalPrice = totalNights * pricePerNight;
 
-        const newBooking = await Booking.create({
+        const booking = await Booking.create({
             propertyId: new mongoose.Types.ObjectId(propertyId),
             userId: new mongoose.Types.ObjectId(userId),
             startDate: start,
             endDate: end,
             totalPrice,
-            status: 'confirmed',
+            status: "confirmed",
+            paymentStatus: "unpaid",
         });
 
+        logger.info({ bookingId: booking._id, userId, totalPrice }, "Bokningen har sparats i databasen");
+
+        const user = await User.findById(userId);
+
+        if (user) {
+            sendBookingConfirmation({
+                email: user.email,
+                guestName: user.name,
+                propertyTitle: (property as any).title,
+                checkIn: start.toLocaleDateString("sv-SE"),
+                checkOut: end.toLocaleDateString("sv-SE"),
+                totalPrice,
+            });
+            logger.info({ bookingId: booking._id, email: user.email }, "Bokningsbekräftelsemejlet har utlösts");
+        }
+
         res.status(201).json({
-            status: 'success',
-            data: newBooking,
+            status: "success",
+            data: booking,
         });
-    }catch(error){
+
+    } catch (error: any) {
+        logger.error({ err: error.message, stack: error.stack }, "Kritiskt fel under bokningsprocessen");
         next(error);
     }
 };
 
-//READ - GET /bookings - get all bookings
-export const getMyBookings = async (req:Request , res:Response, next:NextFunction): Promise<void> => {
-    try{
-        const userId = req.user?.id;
+export const payBooking = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const bookingId = req.params.id;
+        logger.info({ bookingId }, "Bearbetar bokningsbetalningsförfrågan");
+        const booking = await Booking.findById(req.params.id).populate("propertyId");
 
-        const bookings = await Booking.find({userId})
-        .populate({
-            path: 'propertyId',
-            select: 'title location images price'
-        })
-        .sort('-createdAt');
+        if (!booking) {
+            logger.warn({ bookingId }, "Betalning misslyckades - Bokningen hittades inte");
+            res.status(404).json({
+                status: "fail",
+                message: "Bokningen hittades inte."
+            });
+            return;
+        }
+
+        booking.paymentStatus = "paid";
+        booking.status = "confirmed";
+        await booking.save();
+
+        logger.info({ bookingId, totalPrice: booking.totalPrice }, "Bokningen har markerats som BETALD");
+
+        const user = await User.findById(booking.userId);
+
+        if (!user) {
+            logger.warn({ userId: booking.userId, bookingId }, "Betalning behandlad men användarkontext saknas för faktura-e-post");
+            res.status(404).json({
+                status: "fail",
+                message: "Användaren hittades inte.",
+            });
+            return;
+        }
+
+        const property = booking.propertyId as any;
+
+        await sendPaymentConfirmation({
+            email: user.email,
+            guestName: user.name,
+            propertyTitle: property?.title,
+            totalPrice: booking.totalPrice,
+            checkIn: "",
+            checkOut: "",
+        });
+
+        logger.info({ bookingId, email: user.email }, "Betalningsbekräftelse via e-post skickades");
+        res.json({
+            status: "success",
+            message: "Betalning bekräftad.",
+            data: booking,
+        });
+    } catch (error: any) {
+        logger.error({ err: error.message, bookingId: req.params.id }, "Kritiskt fel under bearbetning av betalningscheck");
+        next(error);
+    }
+};
+
+export const getMyBookings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const userId = req.user?.id;
+        logger.info({ userId }, "Hämtar bokningslista för instrumentpanelen för användaren");
+
+        const bookings = await Booking.find({ userId })
+            .populate({
+                path: 'propertyId',
+                select: 'title location images pricePerNight price'
+            })
+            .sort('-createdAt');
 
         res.status(200).json({
             status: 'success',
             results: bookings.length,
             data: bookings,
         });
-    }catch(error){
+
+    } catch (error: any) {
+        logger.error({ err: error.message, userId: req.user?.id }, "Error fetching booking dashboard list");
         next(error);
     }
 };
 
-//READ - GET /bookings/host - get all bookings for current host's listings
-export const getHostBookings = async (req: Request , res: Response , next: NextFunction): Promise<void> => {
+export const getHostBookings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const hostId = req.user?.id;
 
@@ -128,13 +230,13 @@ export const getHostBookings = async (req: Request , res: Response , next: NextF
             return;
         }
 
-        const hostListings = await Listning.find({ userId: new mongoose.Types.ObjectId(hostId) }).select('_id');
+        const hostListings = await Property.find({ userId: new mongoose.Types.ObjectId(hostId) }).select('_id');
         const propertyIds = hostListings.map((listing) => listing._id);
 
         const bookings = await Booking.find({ propertyId: { $in: propertyIds } })
             .populate({
                 path: 'propertyId',
-                select: 'title location images price'
+                select: 'title location images pricePerNight price'
             })
             .populate({
                 path: 'userId',
@@ -147,17 +249,19 @@ export const getHostBookings = async (req: Request , res: Response , next: NextF
             results: bookings.length,
             data: bookings,
         });
-    } catch (error) {
+    } catch (error: any) {
         next(error);
     }
 };
 
-//READ - GET/booking/:id - get a booking
-export const getBookingById = async (req: Request , res: Response ,  next: NextFunction) : Promise<void> => {
+export const getBookingById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+        const bookingId = req.params.id;
+        logger.info({ bookingId, userId: req.user?.id }, "Hämtar detaljer om fristående bokningsinstans");
         const booking = await Booking.findById(req.params.id).populate('propertyId');
 
-        if(!booking){
+        if (!booking) {
+            logger.warn({ bookingId }, "Misslyckades med att hämta fristående bokningar – hittades inte");
             res.status(404).json({
                 status: 'fail',
                 message: 'Bokningen existerar inte.',
@@ -166,45 +270,49 @@ export const getBookingById = async (req: Request , res: Response ,  next: NextF
         }
 
         if (booking.userId.toString() !== req.user?.id) {
-            res.status(403).json({
-                status: 'fail',
-                message: 'Du saknar behörighet att visa denna bokning.'
-            });
+            logger.warn({ bookingId, requesterId: req.user?.id, realOwnerId: booking.userId }, "Obehörigt försök att få åtkomst till privat bokningsdata");
+            res.status(403).json({ status: 'fail', message: 'Du saknar behörighet att visa denna bokning.' });
             return;
         }
 
-        res.status(200).json({status: 'success', data: booking});
-    }catch (error) {
+        res.status(200).json({ status: 'success', data: booking });
+    } catch (error: any) {
+        logger.error({ err: error.message, bookingId: req.params.id }, "Fel i hanteraren för enskild bokningsfråga");
         next(error);
     }
 };
 
-
-//DELETE /bookings/:id - cancel a booking
 export const cancelBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const booking = await Booking.findById(req.params.id);
+    try {
+        const bookingId = req.params.id;
+        logger.info({ bookingId, userId: req.user?.id }, "Avbokningsförfrågan har skickats in för bokning");
+        const booking = await Booking.findById(req.params.id);
 
-    if (!booking) {
-      res.status(404).json({ status: 'fail', message: 'Bokningen hittades inte.' });
-      return;
+        if (!booking) {
+            logger.warn({ bookingId }, "Avbokning avvisad – bokningen hittades inte");
+            res.status(404).json({ status: 'fail', message: 'Bokningen hittades inte.' });
+            return;
+        }
+
+        if (booking.userId.toString() !== req.user?.id) {
+            logger.warn({ bookingId, violatorId: req.user?.id }, "Avbokning avvisad – Begärande part är inte ägare till resan");
+            res.status(403).json({ status: 'fail', message: 'Du kan bara avboka dina egna resor.' });
+            return;
+        }
+
+        if (new Date(booking.startDate) < new Date()) {
+            logger.warn({ bookingId, startDate: booking.startDate }, "Avbokning avvisad – Vistelsen har redan påbörjats");
+            res.status(400).json({ status: 'fail', message: 'Du kan inte avboka en resa som redan påbörjats.' });
+            return;
+        }
+
+        booking.status = 'cancelled';
+        await booking.save();
+
+        logger.info({ bookingId, userId: req.user?.id }, "Bokningsstatus har ändrats till avbruten");
+        res.status(200).json({ status: 'success', message: 'Bokningen har avbokats.', data: booking });
+    } catch (error: any) {
+        logger.error({ err: error.message, bookingId: req.params.id }, "Fel vid bearbetning av bokningsavbokningssekvens");
+        next(error);
     }
-
-    if (booking.userId !== req.user?.id) {
-      res.status(403).json({ status: 'fail', message: 'Du kan bara avboka dina egna resor.' });
-      return;
-    }
-
-    if (new Date(booking.startDate) < new Date()) {
-      res.status(400).json({ status: 'fail', message: 'Du kan inte avboka en resa som redan påbörjats.' });
-      return;
-    }
-
-    booking.status = 'canceled';
-    await booking.save();
-
-    res.status(200).json({ status: 'success', message: 'Bokningen har avbokats.', data: booking });
-  } catch (error) {
-    next(error);
-  }
 };

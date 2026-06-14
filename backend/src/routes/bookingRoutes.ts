@@ -5,7 +5,8 @@ import {
   getMyBookings, 
   getHostBookings,
   getBookingById, 
-  cancelBooking 
+  cancelBooking,
+   payBooking,
 } from '../controllers/BookingController';
 
 const router = express.Router();
@@ -18,5 +19,7 @@ router.route('/my-bookings').get(getMyBookings);
 router.route('/host').get(getHostBookings);
 router.route('/:id').get(getBookingById);
 router.route('/:id/cancel').patch(cancelBooking);
+
+router.post("/:id/pay", verifyToken, payBooking);
 
 export default router;

@@ -6,7 +6,8 @@ export interface IBooking extends Document {
     startDate: Date;
     endDate: Date;
     totalPrice: number;
-    status: 'pending' | 'confirmed' | 'canceled';
+    status: 'pending' | 'confirmed' | 'cancelled';
+    paymentStatus: 'unpaid' | 'paid';
     createdAt: Date;
     updatedAt: Date;
 }
@@ -15,7 +16,7 @@ const BookingSchema: Schema = new Schema (
 {
     propertyId: {
         type: Schema.Types.ObjectId,
-        ref: 'Listning',
+        ref: 'Property',
         required: [true , 'En bokning måste vara kopplad till ett boende.'],
     },
     userId: {
@@ -37,15 +38,19 @@ const BookingSchema: Schema = new Schema (
     },
     status: {
         type: String,
-        enum: ['pending' , 'confirmed' , 'canceled'],
+        enum: ['pending' , 'confirmed' , 'cancelled'],
         default: 'confirmed',
+    },
+    paymentStatus:{
+        type: String,
+        enum: ['unpaid' , 'paid'],
+        default: 'unpaid',
     },
 },
 {
     timestamps: true, 
-  }
+}
 );
-
 
 BookingSchema.index({ propertyId: 1, startDate: 1, endDate: 1 });
 

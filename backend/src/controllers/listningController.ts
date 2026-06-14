@@ -5,6 +5,7 @@ import { Request, Response } from 'express';
 import { createListning, deleteListning, findListning, getListnings, getApprovedListnings, updateListning } from '../data/listnings';
 import { uploadDirectory } from '../config/upload';
 import { ListingImage } from '../types';
+import {logger} from './../logger/logger'
 import { AdminLog } from '../models/AdminLog'; // Importera den nya loggmodellen
 import Message from '../models/Message'; // Importera meddelandemodellen
 
@@ -89,8 +90,12 @@ const parsePropertyType = (value: unknown, fallback: PropertyType): PropertyType
 
 export const listListnings = async (_req: Request, res: Response) => {
   try {
+    //INFO LOG
+    logger.info("Hämtar alla aktiva fastighetsannonser");
     res.json(await getListnings());
-  } catch (error) {
+  } catch (error:any) {
+    //ERROR LOG
+    logger.error({ err: error.message }, 'Fel vid hämtning av annonser');
     console.error('Fel vid hämtning av annonser:', error);
     res.status(500).json({ message: 'Kunde inte hämta annonser.' });
   }
@@ -133,7 +138,13 @@ export const addListning = async (req: Request, res: Response) => {
     const propertyType = parsePropertyType(req.body.propertyType, 'Lägenhet');
     const userId = req.user?.id;
 
+   
+      
+ //INFO LOG
+    logger.info({ title, price: numericPrice }, "Initierar processen för att skapa listning");
     if (!title || !description || !location || !Number.isFinite(numericPrice) || numericPrice <= 0) {
+      //WARN LOG
+      logger.warn({ title, price: req.body.price }, "Listing creation rejected - Invalid input parameters");
       res.status(400).json({
         message: 'Titel, beskrivning, plats och ett pris större än 0 krävs.',
       });
@@ -162,6 +173,8 @@ export const addListning = async (req: Request, res: Response) => {
     }
 
     const files = (req.files ?? []) as Express.Multer.File[];
+    //INFO LOG
+    logger.info({ fileCount: files.length }, "Bearbetar uppladdade filbilagor för listning");
     const images: ListingImage[] = files.map((file) => ({
       id: file.filename,
       originalName: file.originalname,
@@ -187,8 +200,13 @@ export const addListning = async (req: Request, res: Response) => {
       availability: parseAvailability(req.body.availability),
     });
 
+    //INFO LOG
+    logger.info({ listingId: listning.id }, "Listningen har skapats och publicerats");
     res.status(201).json(listning);
-  } catch (error) {
+  } catch (error:any) {
+
+    //ERROR LOG
+    logger.error({ err: error.message, stack: error.stack }, 'Fel vid skapande av annons');
     console.error('Fel vid skapande av annons:', error);
     res.status(500).json({ message: 'Kunde inte skapa annonsen.' });
   }
@@ -196,13 +214,18 @@ export const addListning = async (req: Request, res: Response) => {
 
 export const editListning = async (req: Request, res: Response) => {
   try {
+    const listingId = req.params.id;
     const { title, description, location, price } = req.body;
     const numericPrice = Number(price);
     const guests = parseCount(req.body.guests);
     const bedrooms = parseCount(req.body.bedrooms);
     const bathrooms = parseCount(req.body.bathrooms);
 
+    //INFO LOG
+    logger.info({ listingId, title }, "Initierar transaktion för ändring av listning");
     if (!title || !description || !location || !Number.isFinite(numericPrice) || numericPrice <= 0) {
+      //ERROR LOG
+      logger.warn({ listingId, title, price: req.body.price }, "Uppdatering av annons avvisad – Validering misslyckades");
       res.status(400).json({
         message: 'Titel, beskrivning, plats och ett pris större än 0 krävs.',
       });
@@ -225,6 +248,8 @@ export const editListning = async (req: Request, res: Response) => {
 
     const currentListning = await findListning(req.params.id);
     if (!currentListning) {
+      //WARn LOG
+      logger.warn({ listingId }, "Uppdatering av listning avvisad – resursen hittades inte");
       res.status(404).json({ message: 'Annonsen hittades inte.' });
       return;
     }
@@ -249,10 +274,19 @@ export const editListning = async (req: Request, res: Response) => {
     );
     const images = [...keptImages, ...uploadedImages];
 
+    //INFO LOG
+    logger.info(
+      { listingId, keptCount: keptImages.length, uploadedCount: uploadedImages.length, removedCount: removedImages.length },
+      "Recalculating gallery sync configurations"
+    );
     await Promise.all(
       removedImages.map(async (image) => {
         const imagePath = path.join(uploadDirectory, image.filename);
-        await fs.unlink(imagePath).catch(() => undefined);
+          await fs.unlink(imagePath).catch((err) => {
+          //WARN LOG
+          logger.warn({ filename: image.filename, err: err.message }, "Misslyckades med att ta bort bildfilen från serverdisken under ersättningen");
+          return undefined;
+        });      
       }),
     );
 
@@ -287,9 +321,13 @@ export const editListning = async (req: Request, res: Response) => {
       adminFeedback: ''
     });
 
+    //INFO LOG
+    logger.info({ listingId }, "Statistiken för listdokumentet har uppdaterats");
     res.json(updatedListning);
-  } catch (error) {
+  } catch (error:any) {
     console.error('Fel vid uppdatering av annons:', error);
+    //ERROR LOG
+    logger.error({ err: error.message, listingId: req.params.id }, 'Fel vid uppdatering av annonser');
     res.status(500).json({ message: 'Kunde inte spara annonsen.' });
   }
 };
@@ -299,19 +337,30 @@ export const reviewListning = async (req: Request, res: Response) => {
   try {
     const { status, feedback } = req.body;
     const adminId = req.user?.id;
+    const listingId = req.params.id;
 
+    //INFO LOG
+    logger.info({ adminId, listingId, requestedStatus: status }, "Administrativ granskningsprocess har inletts för listning");
     if (!status || !['approved', 'needs_revision', 'rejected'].includes(status)) {
+
+      //WARN LOG
+      logger.warn({ adminId, listingId, invalidStatus: status }, "Recension av objekt avvisad - Ogiltigt statusvärde mottaget");
       res.status(400).json({ message: 'Ogiltig status. Välj "approved", "needs_revision" eller "rejected".' });
       return;
     }
 
     if ((status === 'needs_revision' || status === 'rejected') && (!feedback || String(feedback).trim() === '')) {
+
+      //WARN LOG
+      logger.warn({ adminId, listingId, status }, "Recension av objektet avvisad – feedback saknas för revision/avslag");
       res.status(400).json({ message: 'En kommentar måste anges om du begär komplettering eller nekar annonsen.' });
       return;
     }
 
     const currentListning = await findListning(req.params.id);
     if (!currentListning) {
+      //WARN LOG
+      logger.warn({ adminId, listingId }, "Granskning av listning avbruten - Mållistningsdokumentet finns inte");
       res.status(404).json({ message: 'Annonsen hittades inte.' });
       return;
     }
@@ -324,41 +373,57 @@ export const reviewListning = async (req: Request, res: Response) => {
       reason: feedback ? String(feedback).trim() : 'Godkänd utan anmärkning'
     });
 
+    //INFO LOG
+    logger.info({ adminId, listingId, action }, "Database AdminLog-historikpost skapad");
     // 2. Uppdatera status och eventuell feedback i databasen
     const updatedListning = await updateListning(req.params.id, {
       status,
       adminFeedback: feedback ? String(feedback).trim() : ''
     });
 
+    //INFO LOG
+    logger.info({ adminId, listingId, finalStatus: status }, "Granskning av moderering av annonsen har slutförts");
     res.status(200).json({
       message: status === 'approved' ? 'Annonsen har godkänts och publicerats.' : status === 'needs_revision' ? 'Komplettering har begärts.' : 'Annonsen har nekats.',
       listning: updatedListning
     });
-  } catch (error) {
+  } catch (error:any) {
     console.error('Fel vid granskning av annons:', error);
+    //ERROR LOG
+    logger.error({ err: error.message, listingId: req.params.id, adminId: req.user?.id }, 'Fel vid granskning av annons');
     res.status(500).json({ message: 'Ett internt fel uppstod vid granskning.' });
   }
 };
 
+
 export const removeListning = async (req: Request, res: Response) => {
   try {
+    const listingId = req.params.id;
     const { reason } = req.body;
     const currentUserId = req.user?.id;
     const currentUserRole = req.user?.role;
 
+    //INFO LOG
+    logger.info({ listingId, currentUserId, currentUserRole }, "Transaktion för borttagning av annons har initierats");
     const currentListning = await findListning(req.params.id);
     if (!currentListning) {
+      //WARN LOG
+      logger.warn({ listingId, currentUserId }, "Borttagning av annons avbruten - Målannonsen hittades inte");
       res.status(404).json({ message: 'Annonsen hittades inte.' });
       return;
     }
 
     if (currentUserRole === 'host') {
       if (currentListning.userId !== currentUserId) {
+        //WARN LOG
+        logger.warn({ listingId, currentUserId, listingOwnerId: currentListning.userId }, "Obehörigt borttagningsförsök – Värden äger inte den här annonsen");
         res.status(403).json({ message: 'Du kan endast ta bort dina egna annonser.' });
         return;
       }
 
       if (currentListning.status !== 'rejected') {
+        //WARN LOG
+        logger.warn({ listingId, currentUserId, listingStatus: currentListning.status }, "Borttagning av värd avvisad – Annonsen har inte statusen avvisad");
         res.status(403).json({ message: 'Du kan endast ta bort en nekad annons.' });
         return;
       }
@@ -369,6 +434,8 @@ export const removeListning = async (req: Request, res: Response) => {
       : 'Annons borttagen.');
 
     if (currentUserRole !== 'host' && deletionReason === '') {
+      //WARN LOG
+      logger.warn({ listingId, currentUserId, currentUserRole }, "Borttagning av administratör avvisad – kommentar om orsaken till borttagningen saknas");
       res.status(400).json({ message: 'En anledning måste anges vid borttagning.' });
       return;
     }
@@ -379,6 +446,9 @@ export const removeListning = async (req: Request, res: Response) => {
       targetId: req.params.id,
       reason: deletionReason
     });
+
+    //INFO LOG
+    logger.info({ listingId, actorId: currentUserId, role: currentUserRole }, "Åtgärden har lagts till i AdminLog-registret");
 
     // Send message to the host about the deletion
     if (currentListning.userId) {
@@ -391,28 +461,42 @@ export const removeListning = async (req: Request, res: Response) => {
         listingTitle: currentListning.title,
         deletionReason
       });
+      //INFO LOG
+      logger.info({ listingId, recipientHostId: currentListning.userId }, "Systemvarningsmeddelande för listförstöring skickat till värdprofilen");
     }
 
     const deletedListning = await deleteListning(req.params.id);
 
     if (!deletedListning) {
+      //ERROR LOG
+      logger.error({ listingId, currentUserId }, "Listning saknas eller ändras samtidigt under det slutliga rensningssteget för databasen");
       res.status(404).json({ message: 'Annonsen hittades inte vid borttagning.' });
       return;
     }
 
+    //INFO LOG
+    logger.info({ listingId, totalImagesToPurge: deletedListning.images.length }, "Startar raderingsloop för binär fil av bildbilaga");
     await Promise.all(
       deletedListning.images.map(async (image) => {
         const imagePath = path.join(uploadDirectory, image.filename);
-        await fs.unlink(imagePath).catch(() => undefined);
-      }),
+         await fs.unlink(imagePath).catch((err) => {
+          //WARN LOG
+          logger.warn({ filename: image.filename, err: err.message }, "Misslyckades med att rensa den föräldralösa filen från disklayouten under fullständig radering av listan.");
+          return undefined;
+        });
+            }),
     );
-
+    
+//INFO LOG
+logger.info({ listingId, purgedBy: currentUserId, actorRole: currentUserRole }, "Listning och tillhörande tillgångsfiler har tagits bort helt från ekosystemet");
     res.status(200).json({
       message: 'Annonsen raderades framgångsrikt och åtgärden loggades. Värden har informerats.',
       id: req.params.id
     });
-  } catch (error) {
+  } catch (error:any) {
     console.error('Fel vid radering av annons:', error);
+    //ERROR LOG
+    logger.error({ err: error.message, listingId: req.params.id }, 'Fel vid radering av annons');
     res.status(500).json({ message: 'Ett internt fel uppstod vid radering.' });
   }
 };
