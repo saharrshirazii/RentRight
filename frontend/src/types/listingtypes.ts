@@ -33,6 +33,10 @@ export type Listing = {
   amenities: string[];
   images: ListingImage[];
   propertyType: 'Lägenhet' | 'Radhus' | 'Studio' | 'Stuga' | 'Villa';
+  availability?: {
+    startDate: string;
+    endDate: string;
+  }[];
   status: ListingStatus;
   adminFeedback?: string;
   createdAt: string;

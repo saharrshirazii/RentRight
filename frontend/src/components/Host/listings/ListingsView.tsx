@@ -178,8 +178,6 @@ export default function ListingsView({
                   type="button" 
                   className="ghost-button" 
                   onClick={() => onEdit(listing)}
-                  disabled={status === 'approved'}
-                  style={{ opacity: status === 'approved' ? 0.5 : 1 }}
                 >
                   Redigera
                 </button>

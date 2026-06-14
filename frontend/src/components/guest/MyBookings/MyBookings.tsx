@@ -74,8 +74,8 @@ const handleCheckout = (booking: BookingData) => {
     if(loading)return <div className='text-center py-20 text-gray-500'>Laddar din bokningar ... </div>;
 
     const today = new Date();
-    const upcomingBookings = bookings.filter(b=>new Date(b.startDate) >= today && b.status !== 'cancelled');
-    const pastBookings = bookings.filter(b=>new Date(b.startDate) < today || b.status === 'cancelled');
+    const upcomingBookings = bookings.filter(b=>new Date(b.startDate) >= today && b.status !== 'canceled');
+    const pastBookings = bookings.filter(b=>new Date(b.startDate) < today || b.status === 'canceled');
     const currentDisplayList = activeTab === 'upcoming' ? upcomingBookings : pastBookings;
 
     //Calculation for dashboard grid

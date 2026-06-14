@@ -16,6 +16,10 @@ export interface IListning extends Document {
   amenities: string[];
   images: ListingImage[];
   propertyType: 'Lägenhet' | 'Radhus' | 'Studio' | 'Stuga' | 'Villa';
+  availability: {
+    startDate: Date;
+    endDate: Date;
+  }[];
   status: ListingStatus;
   adminFeedback?: string;
   createdAt: Date;
@@ -67,6 +71,15 @@ const ListningSchema = new Schema<IListning>(
       type: String,
       default: '',
       trim: true
+    },
+    availability: {
+      type: [
+        {
+          startDate: { type: Date, required: true },
+          endDate: { type: Date, required: true },
+        }
+      ],
+      default: []
     }
   },
   { timestamps: true },

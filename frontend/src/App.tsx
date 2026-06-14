@@ -21,6 +21,7 @@ import {PaymentSuccessPage} from "./components/guest/MyBookings/PaymentSuccessPa
 import ListingForm from "./components/Host/listings/ListingForm";
 import ListingPreviewModal from "./components/Host/listings/ListingPreviewModal";
 import ListingsView from "./components/Host/listings/ListingsView";
+import HostAvailability from "./components/Host/listings/HostAvailability";
 import HostBookings from "./components/Host/bookings/HostBookings";
 import HostDashboard from "./components/Host/dashboard/HostDashboard";
 import { HostMessages } from "./components/Host/messages/HostMessages";
@@ -320,6 +321,10 @@ useEffect(() => {
                     <HostBookings />
                   )}
 
+                  {activeTab === "tillganglighet" && (
+                    <HostAvailability listings={listings} onEdit={setEditingListing} />
+                  )}
+
                   {activeTab === "meddelanden" && (
                     <div style={{ padding: '20px' }}>
                       <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Meddelanden</h2>
@@ -327,7 +332,7 @@ useEffect(() => {
                     </div>
                   )}
 
-                  {activeTab !== "boende" && activeTab !== "bokningar" && activeTab !== "meddelanden" && (
+                  {activeTab !== "boende" && activeTab !== "bokningar" && activeTab !== "meddelanden" && activeTab !== "tillganglighet" && (
                     <div className="placeholder-card">
                       <h2>{tabs.find((tab) => tab.id === activeTab)?.label ?? ""}</h2>
                       <p>Den här designvyn är inte byggd nu.</p>

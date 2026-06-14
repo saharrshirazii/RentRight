@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { FaRegTrashAlt, FaEdit } from "react-icons/fa";
 import { BiShow } from "react-icons/bi";
 
-
-
 export interface BookingData {
   _id: string;
   startDate: string;
@@ -35,7 +33,6 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onC
   const navigate = useNavigate();
   const { startDate, endDate, totalPrice, status, _id, propertyId: property } = booking;
 
-
   const start = new Date(startDate).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
   const end = new Date(endDate).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -56,7 +53,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onC
       )}
 
       {/* Image display */}
-      <div className='w-80 h-full overflow-hidden p-4 flex-shrink-0'>
+      <div className='w-80 h-full overflow-hidden p-4 shrink-0'>
         <img
           src={formatImgUrl(property?.images?.[0])}
           alt={property?.title || 'Boende bild'}
@@ -108,39 +105,41 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onC
             </div>
 
             {/* Total Price positioned flawlessly on the right edge */}
-            <div className="text-right grid grid-col-2 items-baseline gap-2">
+            <div className="text-right grid grid-cols-1 items-baseline gap-2">
               {booking.paymentStatus === "paid" ? (
-  <span className="text-green-600 font-bold">
-    Betald
-  </span>
-) : (
-  <span className="text-orange-500 font-bold">
-    Ej betald
-  </span>
-)}
+                <span className="text-green-600 font-bold">
+                  ✓ Betald
+                </span>
+              ) : (
+                <span className="text-orange-500 font-bold">
+                  ⚠ Ej betald
+                </span>
+              )}
               <div>
-                <span className="text-sm  text-gray-400 font-bold tracking-wider">Totalpris:</span>
+                <span className="text-sm text-gray-400 font-bold tracking-wider mr-1">Totalpris:</span>
                 <span className="text-base font-black text-gray-900">{totalPrice.toLocaleString()} kr</span>
               </div>
-              <div>
-                <button
-                  onClick={() =>
-                    navigate(`/properties/${property._id}/checkout`, {
-                      state: {
-                        bookingId: booking._id,
-                        checkIn: startDate,
-                        checkOut: endDate,
-                        guestsCount: property.guests
-                      }
-                    })
-                  }
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-xl">
-                  Gå till betalning
-                </button>
-              </div>
+              
+              {booking.paymentStatus !== "paid" && (
+                <div>
+                  <button
+                    onClick={() =>
+                      navigate(`/properties/${property._id}/checkout`, {
+                        state: {
+                          bookingId: booking._id,
+                          checkIn: startDate,
+                          checkOut: endDate,
+                          guestsCount: property.guests
+                        }
+                      })
+                    }
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer shadow-sm">
+                    Gå till betalning
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-
 
         </div>
       </div>
