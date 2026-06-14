@@ -18,7 +18,7 @@ const {
 } = (location.state as any) || {};
 
     useEffect(() => {
-        fetch(`http://localhost:3000/api/properties/${id}`)
+        fetch(`http://localhost:3000/api/v1/listnings/${id}`)
             .then(res => res.json())
             .then(data => setProperty(data));
     }, [id]);
