@@ -1,13 +1,14 @@
 import mongoose , {Schema , Document} from 'mongoose';
 
 export interface IBooking extends Document {
-    PropertyId : mongoose.Types.ObjectId | string;
-    userId: string;
+    propertyId: mongoose.Types.ObjectId | string;
+    userId: mongoose.Types.ObjectId | string;
     startDate: Date;
     endDate: Date;
     totalPrice: number;
-    status: 'Pending' | 'confirmed' | 'canceled';
-    createAt: Date;
+    status: 'pending' | 'confirmed' | 'canceled';
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 const BookingSchema: Schema = new Schema (
@@ -18,7 +19,8 @@ const BookingSchema: Schema = new Schema (
         required: [true , 'En bokning måste vara kopplad till ett boende.'],
     },
     userId: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: 'User',
         required: [true , 'En bokning måste ha en tillhörande gäst.'],
     },
     startDate: {
@@ -32,11 +34,10 @@ const BookingSchema: Schema = new Schema (
     totalPrice: {
         type: Number,
         required: [true , 'Totalpris måste beräknas.'],
-
     },
     status: {
         type: String,
-        enum: ['pending' , 'confirmed' , 'cancelled'],
+        enum: ['pending' , 'confirmed' , 'canceled'],
         default: 'confirmed',
     },
 },

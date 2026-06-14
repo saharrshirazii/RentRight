@@ -3,6 +3,7 @@ import { verifyToken } from '../middleware/authMiddleware';
 import { 
   createBooking, 
   getMyBookings, 
+  getHostBookings,
   getBookingById, 
   cancelBooking 
 } from '../controllers/BookingController';
@@ -13,11 +14,9 @@ const router = express.Router();
 router.use(verifyToken);
 
 router.route('/').post(createBooking);
-
 router.route('/my-bookings').get(getMyBookings);
-
+router.route('/host').get(getHostBookings);
 router.route('/:id').get(getBookingById);
-
 router.route('/:id/cancel').patch(cancelBooking);
 
 export default router;

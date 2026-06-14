@@ -11,6 +11,11 @@ export const createBooking = async(req: Request , res: Response , next:NextFunct
 
         const userId = req.user?.id;
 
+        if (!userId) {
+            res.status(401).json({ status: 'fail', message: 'Du måste vara inloggad för att boka.' });
+            return;
+        }
+
         const start = new Date(checkIn);
         const end = new Date(checkOut);
 
@@ -35,27 +40,25 @@ export const createBooking = async(req: Request , res: Response , next:NextFunct
                 status: 'fail',
                 message: 'Boendet är tyvärr redan bokat under dessa datum.'
             });
-        return;
+            return;
         }
 
-const property = await Property.findById<IProperty>(propertyId);
+        const property = await Property.findById<IProperty>(propertyId);
 
         if(!property) {
             res.status(404).json({
                 status: 'fail',
                 message: 'Boendet hittades inte.'
             });
-
             return;
         }
 
         const totalNights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-
         const totalPrice = totalNights * property.pricePerNight;
 
-       const newBooking = await Booking.create({
-            PropertyId: new mongoose.Types.ObjectId(propertyId),
-            userId,
+        const newBooking = await Booking.create({
+            propertyId: new mongoose.Types.ObjectId(propertyId),
+            userId: new mongoose.Types.ObjectId(userId),
             startDate: start,
             endDate: end,
             totalPrice,
@@ -63,36 +66,68 @@ const property = await Property.findById<IProperty>(propertyId);
         });
 
         res.status(201).json({
-            status: 'succes',
+            status: 'success',
             data: newBooking,
-        })
+        });
     }catch(error){
-        next(error)
+        next(error);
     }
 };
 
 //READ - GET /bookings - get all bookings
 export const getMyBookings = async (req:Request , res:Response, next:NextFunction): Promise<void> => {
-try{
-    const userId = req.user?.id;
+    try{
+        const userId = req.user?.id;
 
-    const bookings = await Booking.find({userId})
-    .populate({
-        path: 'propertyId',
-        select: 'title location images pricePerNight'
-    })
-    .sort('-createdAt');
+        const bookings = await Booking.find({userId})
+        .populate({
+            path: 'propertyId',
+            select: 'title location images pricePerNight'
+        })
+        .sort('-createdAt');
 
-    res.status(200).json({
-        status: 'success',
-        results: bookings.length,
-        data: bookings,
-    });
+        res.status(200).json({
+            status: 'success',
+            results: bookings.length,
+            data: bookings,
+        });
+    }catch(error){
+        next(error);
+    }
+};
 
-}catch(error){
-    next(error);
+//READ - GET /bookings/host - get all bookings for current host's listings
+export const getHostBookings = async (req: Request , res: Response , next: NextFunction): Promise<void> => {
+    try {
+        const hostId = req.user?.id;
 
-}
+        if (!hostId) {
+            res.status(401).json({ status: 'fail', message: 'Du måste vara inloggad.' });
+            return;
+        }
+
+        const hostProperties = await Property.find({ owner: new mongoose.Types.ObjectId(hostId) }).select('_id');
+        const propertyIds = hostProperties.map((property) => property._id);
+
+        const bookings = await Booking.find({ propertyId: { $in: propertyIds } })
+            .populate({
+                path: 'propertyId',
+                select: 'title location images pricePerNight'
+            })
+            .populate({
+                path: 'userId',
+                select: 'name email'
+            })
+            .sort('-createdAt');
+
+        res.status(200).json({
+            status: 'success',
+            results: bookings.length,
+            data: bookings,
+        });
+    } catch (error) {
+        next(error);
+    }
 };
 
 //READ - GET/booking/:id - get a booking
@@ -108,7 +143,7 @@ export const getBookingById = async (req: Request , res: Response ,  next: NextF
             return;
         }
 
-        if (booking.userId !== req.user?.id) {
+        if (booking.userId.toString() !== req.user?.id) {
             res.status(403).json({
                 status: 'fail',
                 message: 'Du saknar behörighet att visa denna bokning.'
