@@ -25,6 +25,9 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
   const [customAmenity, setCustomAmenity] = useState("");
   const [existingImages, setExistingImages] = useState<ListingImage[]>(listing?.images ?? []);
   const [images, setImages] = useState<File[]>([]);
+  const [availabilityRanges, setAvailabilityRanges] = useState<{ startDate: string; endDate: string }[]>(listing?.availability ?? []);
+  const [newRangeStart, setNewRangeStart] = useState('');
+  const [newRangeEnd, setNewRangeEnd] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const isEditing = mode === "edit";
@@ -75,6 +78,35 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
     );
   };
 
+  const addAvailabilityRange = () => {
+    if (!newRangeStart || !newRangeEnd) {
+      setError('Välj både start- och slutdatum för tillgänglighet.');
+      return;
+    }
+
+    const start = new Date(newRangeStart);
+    const end = new Date(newRangeEnd);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) {
+      setError('Startdatum måste vara före slutdatum och vara giltiga datum.');
+      return;
+    }
+
+    setAvailabilityRanges((currentRanges) => [
+      ...currentRanges,
+      { startDate: newRangeStart, endDate: newRangeEnd },
+    ].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()));
+    setNewRangeStart('');
+    setNewRangeEnd('');
+    setError('');
+  };
+
+  const removeAvailabilityRange = (indexToRemove: number) => {
+    setAvailabilityRanges((currentRanges) =>
+      currentRanges.filter((_range, index) => index !== indexToRemove),
+    );
+  };
+
   const addCustomAmenity = () => {
     const trimmedAmenity = customAmenity.trim();
     if (!trimmedAmenity || selectedAmenities.includes(trimmedAmenity)) return;
@@ -108,6 +140,7 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
     formData.append("propertyType", propertyType);
     formData.append("amenities", JSON.stringify(selectedAmenities));
     formData.append("keepImageIds", JSON.stringify(existingImages.map((image) => image.id)));
+    formData.append("availability", JSON.stringify(availabilityRanges));
     
     images.forEach((image) => {
       formData.append("images", image);
@@ -206,6 +239,37 @@ export default function ListingForm({ listing, mode, onCancel, onSaved }: Listin
           <span>Beskrivning</span>
           <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Beskriv boendet för gästerna" />
         </label>
+
+        <fieldset className="field field--wide" style={{ border: '1px solid #d1d5db', borderRadius: '12px', padding: '16px' }}>
+          <legend style={{ padding: '0 8px', fontWeight: 600 }}>Tillgänglighetskalender</legend>
+          <div style={{ display: 'grid', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <label>
+                <span>Startdatum</span>
+                <input type="date" value={newRangeStart} onChange={(event) => setNewRangeStart(event.target.value)} />
+              </label>
+              <label>
+                <span>Slutdatum</span>
+                <input type="date" value={newRangeEnd} onChange={(event) => setNewRangeEnd(event.target.value)} />
+              </label>
+            </div>
+            <button type="button" className="ghost-button" onClick={addAvailabilityRange}>
+              Lägg till tillgänglighetsintervall
+            </button>
+            {availabilityRanges.length > 0 && (
+              <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>
+                {availabilityRanges.map((range, index) => (
+                  <div key={`${range.startDate}-${range.endDate}-${index}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '10px' }}>
+                    <span>{new Date(range.startDate).toLocaleDateString('sv-SE')} – {new Date(range.endDate).toLocaleDateString('sv-SE')}</span>
+                    <button type="button" className="ghost-button ghost-button--danger" onClick={() => removeAvailabilityRange(index)}>
+                      Ta bort
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </fieldset>
 
         <label className="field field--wide">
           <span>Bilder</span>

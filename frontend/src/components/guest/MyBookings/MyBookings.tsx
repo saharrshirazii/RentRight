@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 
 export const MyBookings: React.FC = () => {
-    const [bookings , setBookings] = useState<BookingData[]>([]);
+const [bookings , setBookings] = useState<BookingData[]>([]);
     const [loading , setLoading] = useState(true);
     const [activeTab , setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
     const navigate = useNavigate();
@@ -57,8 +57,15 @@ useEffect(() => {
 
 
 //handle checkout
-const handleCheckout = (propertyId: string) => {
-    navigate(`/properties/${propertyId}/checkout`);
+const handleCheckout = (booking: BookingData) => {
+  navigate(`/properties/${booking.propertyId}/checkout`, {
+    state: {
+      bookingId: booking._id,
+      checkIn: booking.startDate,
+      checkOut: booking.endDate,
+      totalPrice: booking.totalPrice,
+    },
+  });
 };
 
 

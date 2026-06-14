@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 
-
 interface Booking {
   _id: string;
   property?: { title: string; location?: string };
@@ -8,7 +7,7 @@ interface Booking {
   startDate: string;
   endDate: string;
   totalPrice: number;
-  status: 'pending' | 'confirmed' | 'canceled';
+  status: 'pending' | 'confirmed' | 'cancelled';
 }
 
 const API_BASE_URL = "http://localhost:3000";
@@ -67,7 +66,7 @@ const HostBookings: React.FC = () => {
     return (
       <div className="placeholder-card" style={{ padding: "40px", textAlign: "center" }}>
         <h2>Inga bokningar ännu</h2>
-        <p style={{ color: "#6b7280" }}>När gäster bokar dina boenden kommer de att dyka upp här!</p>
+        <p style={{ color: "#6b7280" }}>När gäster bokat dina boenden kommer de att dyka upp här!</p>
       </div>
     );
   }
@@ -89,6 +88,7 @@ const HostBookings: React.FC = () => {
           const guestEmail = booking.user?.email || "Ingen email";
           const dateRange = formatDateRange(booking.startDate, booking.endDate);
           const nights = calculateNights(booking.startDate, booking.endDate);
+          
           const statusTone = booking.status === "confirmed" ? "blue" : booking.status === "pending" ? "yellow" : "red";
           const statusLabel = booking.status === "confirmed" ? "Bekräftad" : booking.status === "pending" ? "Väntar" : "Avbokad";
 

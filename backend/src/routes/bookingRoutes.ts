@@ -6,12 +6,13 @@ import {
   getMyBookings, 
   getHostBookings,
   getBookingById, 
-  cancelBooking 
+  cancelBooking,
+  payBooking,
 } from '../controllers/BookingController';
 
 const router = express.Router();
 
-//Protect all endpoints globally inside this routing module
+// Skydda alla endpoints globalt i denna modul
 router.use(verifyToken);
 
 router.route('/').post(createBooking);
@@ -19,5 +20,6 @@ router.route('/my-bookings').get(getMyBookings);
 router.route('/host').get(checkRole(['host', 'admin']), getHostBookings);
 router.route('/:id').get(getBookingById);
 router.route('/:id/cancel').patch(cancelBooking);
+router.route('/:id/pay').post(payBooking);
 
 export default router;

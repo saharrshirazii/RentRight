@@ -85,8 +85,8 @@ export const PropertyDetail: React.FC = () => {
   //To read user context dynamically from localStorage
   const loggedInUserStr = localStorage.getItem('user');
   const currentUser = loggedInUserStr ? JSON.parse(loggedInUserStr) : {
-      name: "Sahar Shiraz", // Fallback name
-      role: "admin"        // Fallback role: 'gäst' | 'värd' | 'admin'
+      name: "Anonym Användare", // Fallback name
+      role: "gäst"        // Fallback role: 'gäst' | 'värd' | 'admin'
   };
 
   // Determine whose profile to actually present
@@ -382,7 +382,7 @@ export const PropertyDetail: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-gray-500 mb-1">Antal gäster</label>
+                <label className="block text-sm font-bold  mb-1">Antal gäster</label>
                 <select
                   value={guestsCount}
                   onChange={(e) => setGuestsCount(Number(e.target.value))}

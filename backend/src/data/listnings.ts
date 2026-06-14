@@ -2,6 +2,11 @@ import { Listning, ListingImage } from '../types';
 import ListningModel, { IListning } from '../models/Listning';
 import mongoose from 'mongoose';
 
+type AvailabilityRange = {
+  startDate: string;
+  endDate: string;
+};
+
 type CreateListningInput = {
   userId: string;
   title: string;
@@ -14,6 +19,7 @@ type CreateListningInput = {
   amenities: string[];
   images: ListingImage[];
   propertyType?: 'Lägenhet' | 'Radhus' | 'Studio' | 'Stuga' | 'Villa';
+  availability?: AvailabilityRange[];
   status?: 'pending' | 'approved' | 'needs_revision' | 'rejected';
   adminFeedback?: string;
 };
@@ -33,6 +39,10 @@ const toListning = (listning: IListning): Listning => ({
   amenities: listning.amenities,
   images: listning.images,
   propertyType: listning.propertyType ?? 'Lägenhet',
+  availability: listning.availability?.map((range) => ({
+    startDate: range.startDate.toISOString(),
+    endDate: range.endDate.toISOString(),
+  })) ?? [],
   status: listning.status,
   adminFeedback: listning.adminFeedback,
   createdAt: listning.createdAt.toISOString(),
@@ -70,6 +80,7 @@ export const createListning = async (input: CreateListningInput) => {
     amenities: input.amenities,
     images: input.images,
     propertyType: input.propertyType ?? 'Lägenhet',
+    availability: input.availability ?? [],
     status: input.status,
     adminFeedback: input.adminFeedback,
   });
