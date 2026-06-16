@@ -279,7 +279,7 @@ const handleDeleteAccount = async () => {
     };
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);
-    const sections = ['messages', 'favorites', 'settings', 'security', 'integrity'];
+    const sections = ['messages', 'favorites', 'bookings', 'settings', 'security', 'integrity'];
     
     sections.forEach((id) => {
       const el = document.getElementById(id);
@@ -307,6 +307,7 @@ const handleDeleteAccount = async () => {
   const menuItems = [
     { id: 'messages', label: 'Meddelanden', icon: <HiMail className="text-xl" /> },
     { id: 'favorites', label: 'Favoriter', icon: <HiHeart className="text-xl" /> },
+    { id: 'bookings', label: 'Mina bokningar', icon: <HiSwitchHorizontal className="text-xl" /> },
     { id: 'settings', label: 'Inställningar', icon: <HiUser className="text-xl" /> },
     { id: 'security', label: 'Säkerhet', icon: <HiLockClosed className="text-xl" /> },
     { id: 'integrity', label: 'Integritet', icon: <HiLockClosed className="text-xl" /> },
@@ -450,6 +451,19 @@ const handleDeleteAccount = async () => {
       ))}
     </div>
   )}
+</section>
+
+<section id="bookings" className="scroll-mt-40 md:scroll-mt-32">
+  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Mina bokningar</h3>
+  <div className="p-8 border border-gray-100 rounded-[2rem] flex flex-col items-center justify-center text-center bg-gray-50/50">
+    <p className="text-gray-600 mb-6">Vill du se dina kommande resor eller hantera tidigare bokningar?</p>
+    <Link 
+      to="/my-bookings" 
+      className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
+    >
+      Gå till Mina bokningar
+    </Link>
+  </div>
 </section>
 
           <section id="settings" className="scroll-mt-40 md:scroll-mt-32">

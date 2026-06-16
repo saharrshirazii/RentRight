@@ -11,15 +11,13 @@ import {
 
 const router = express.Router();
 
-//Protect all endpoints globally inside this routing module
-router.use(verifyToken);
 
-router.route('/').post(createBooking);
-router.route('/my-bookings').get(getMyBookings);
-router.route('/host').get(getHostBookings);
-router.route('/:id').get(getBookingById);
-router.route('/:id/cancel').patch(cancelBooking);
 
-router.post("/:id/pay", verifyToken, payBooking);
+router.post('/', verifyToken, createBooking);
+router.get('/my-bookings', verifyToken, getMyBookings);
+router.get('/host', verifyToken, getHostBookings);
+router.get('/:id', verifyToken, getBookingById);
+router.patch('/:id/cancel', verifyToken, cancelBooking);
+router.post('/:id/pay', verifyToken, payBooking);
 
 export default router;

@@ -90,7 +90,9 @@ export default function BookingConfirmation() {
 
     // Form submit handler
     const handleConfirmAndBook = async (e: React.FormEvent) => {
+        const token = localStorage.getItem('token');
         e.preventDefault();
+        console.log("DEBUG: Försöker boka med ID:", id);
         if (!termsAccepted || !cancelationAccepted) return alert('Du måste godkänna bokningsvillkoren.');
         
         const loggedInUser = localStorage.getItem('user');
