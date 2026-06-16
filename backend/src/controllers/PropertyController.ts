@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from 'express'
 import {NotFoundError , ValidationError} from '../errors/AppError'
 import mongoose from 'mongoose'
-import Property from '../models/Property';
+import { Property } from '../models/property';
 import Booking from '../models/Booking';
 import {logger} from './../logger/logger'
+
 
 
 

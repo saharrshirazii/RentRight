@@ -8,19 +8,21 @@ import Listning from '../models/Listning';
 import Favorite from '../models/Favorite';
 import Booking from '../models/Booking';
 import Message from '../models/Message';
-import property from '../models/property';
+import { Property } from '../models/property';
+import { Review } from '../models/Review';
 
 export const exportUserData = async (req: Request, res: Response) => {
     try {
         const userId = req.user?.id;
         const userObjectId = new Types.ObjectId(userId);
 
-        const [listings, properties, favorites, bookings, messages] = await Promise.all([
+        const [listings, properties, favorites, bookings, messages, reviews] = await Promise.all([
             Listning.find({ userId: userObjectId } as any),
-            property.find({ owner: userObjectId } as any),
+            Property.find({ owner: userObjectId } as any),
             Favorite.find({ userId: userObjectId } as any),
             Booking.find({ guestId: userObjectId } as any),
-            Message.find({ $or: [{ sender: userObjectId }, { receiver: userObjectId }] } as any)
+            Message.find({ $or: [{ sender: userObjectId }, { receiver: userObjectId }] } as any),
+            Review.find({ author: userObjectId } as any)
         ]);
 
         const exportData = {
@@ -30,7 +32,8 @@ export const exportUserData = async (req: Request, res: Response) => {
             properties,
             favorites,
             bookings,
-            messages
+            messages,
+            reviews
         };
 
         res.status(200).json(exportData);
@@ -63,10 +66,11 @@ export const deleteUserAccount = async (req: Request, res: Response) => {
         // 3. Radera all data i databasen
         await Promise.all([
             Listning.deleteMany({ userId: userObjectId } as any),
-            property.deleteMany({ owner: userObjectId } as any),
+            Property.deleteMany({ owner: userObjectId } as any),
             Favorite.deleteMany({ userId: userObjectId } as any),
             Booking.deleteMany({ guestId: userObjectId } as any),
             Message.deleteMany({ $or: [{ sender: userObjectId }, { receiver: userObjectId }] } as any),
+            Review.deleteMany({ author: userObjectId } as any),
             User.findByIdAndDelete(userObjectId)
         ]);
 

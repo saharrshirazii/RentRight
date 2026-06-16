@@ -34,4 +34,4 @@ const PropertySchema: Schema = new Schema({
   owner: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true }); // Automatically adds createdAt and updatedAt
 
-export default mongoose.model<IProperty>('Property', PropertySchema);
+export const Property = mongoose.models.Property || mongoose.model<IProperty>('Property', PropertySchema);
