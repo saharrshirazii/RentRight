@@ -79,6 +79,11 @@ export const PropertyDetail: React.FC = () => {
   const [checkOut, setCheckOut] = useState('');
   const [guestsCount, setGuestsCount] = useState(1);
 
+  //Recensioner
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+const [rating, setRating] = useState<number | null>(null); // Starta som null
+const [comment, setComment] = useState('');
+
   //to track the currently displayed large image
   const [activeImage, setActiveImage] = useState<string>('');
 
@@ -114,6 +119,9 @@ export const PropertyDetail: React.FC = () => {
     });
   }
 
+
+const [reviews, setReviews] = useState<any[]>([]);
+
   useEffect(() => {
     const fetchProperty = async () => {
       try {
@@ -121,6 +129,9 @@ export const PropertyDetail: React.FC = () => {
         const response = await axios.get(`http://localhost:3000/api/v1/listnings/${id}`);
         if (response.data) {
           const fetchedData = response.data;
+
+          const reviewsResponse = await axios.get(`http://localhost:3000/api/v1/listnings/${id}/reviews`);
+          setReviews(reviewsResponse.data);
 
           // Check if listing is approved
           if (fetchedData.status !== 'approved') {
@@ -147,35 +158,18 @@ export const PropertyDetail: React.FC = () => {
           setProperty({
             ...fetchedData,
             images: propertyImages,
-            rating: fetchedData.rating || 4.5,
-            reviewsCount: fetchedData.reviewsCount || 2,
+            
             location: fetchedData.location || 'Sverige',
             owner: fetchedData.owner || { name: 'Värd' },
             guests: fetchedData.guests || 4,
             bedrooms: fetchedData.bedrooms || 2,
             bathrooms: fetchedData.bathrooms || 1,
             category: fetchedData.category || 'Lägenhet',
-            reviewsList: fetchedData.reviewsList || [
-              {
-                _id: '1',
-                author: 'Ulrika Karlsson',
-                date: 'Januari 2024',
-                rating: 5,
-                comment: 'Fantastiskt boende! Rent, modernt och perfekt läge. Värden var otroligt hjälpsam med allt från incheckning till lokala tips.',
-                hostReply: 'Tack Ulrika! Du är varmt välkommen tillbaka när som helst.'
-              },
-              {
-                _id: '2',
-                author: 'Mikael Nilsson',
-                date: 'Oktober 2023',
-                rating: 4,
-                comment: 'Mycket fint boende med ett bra läge, nära till butiker och restauranger.'
-              }
-            ]
+            
           });
           // 2. Set the initial active image to the first image in the array
           const firstImg = propertyImages[0];
-          setActiveImage(firstImg.startsWith('http') ? firstImg : `http://localhost:3000/assets/${firstImg}`);
+          setActiveImage(firstImg.startsWith('http') ? firstImg : `http://localhost:3000${firstImg}`);
         }
       } catch (error: any) {
         setError(error.response?.data?.message || 'Kunde inte hämta boendedetaljer.');
@@ -210,6 +204,24 @@ export const PropertyDetail: React.FC = () => {
     );
   }
 
+  // Lägg dessa ovanför din 'return'
+const ratedReviews = reviews.filter(r => r.rating);
+const avgRating = ratedReviews.length > 0 
+  ? (ratedReviews.reduce((sum, r) => sum + r.rating, 0) / ratedReviews.length).toFixed(1) 
+  : "0.0";
+
+  const calculateAverageRating = () => {
+  // Filtrera bort recensioner som inte har något betyg (null)
+  const ratedReviews = reviews.filter(rev => rev.rating != null);
+  
+  if (ratedReviews.length === 0) return 0; // Inga betyg än
+
+  const total = ratedReviews.reduce((sum, rev) => sum + rev.rating, 0);
+  return (total / ratedReviews.length).toFixed(1); // Returnerar t.ex. "4.2"
+};
+
+const averageRating = calculateAverageRating();
+
 
   return (
     <div className="bg-white min-h-screen text-gray-800 antialiased">
@@ -222,15 +234,15 @@ export const PropertyDetail: React.FC = () => {
         {/* Main Header */}
         <h1 className="text-2xl font-bold text-gray-900 mb-1">{property.title}</h1>
         <div className="flex items-center gap-2 text-xs text-gray-600 mb-4">
-          <span className="text-yellow-500 font-semibold">★ {property.rating || '4.5'}</span>
+          <span className="text-yellow-500 font-semibold">★ {avgRating}</span>
           <span>•</span>
-          <span className="cursor-pointer">{property.reviewsCount} recensioner</span>
+          <span className="cursor-pointer">{reviews.length} recensioner</span>
           <span>•</span>
           <span>{property.location}</span>
         </div>
 
         {/* Carousel / Image Viewport */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 rounded-2xl overflow-hidden shadow-sm aspect-[16/9] md:max-h-[400px] mb-8 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 rounded-2xl overflow-hidden shadow-sm aspect-16/9 md:max-h-[400px] mb-8 w-full">
 
           {/* Left Side: BIG Main Image*/}
           <div className="md:col-span-2 relative h-full w-full overflow-hidden">
@@ -251,7 +263,7 @@ export const PropertyDetail: React.FC = () => {
                 <button
                   key={index}
                   onClick={() => setActiveImage(formattedUrl)}
-                  className="relative w-full w-full aspect-square overflow-hidden cursor-pointer focus:outline-none group rounded-xl"
+                  className="relative  w-full aspect-square overflow-hidden cursor-pointer focus:outline-none group rounded-xl"
                 >
                   <img
                     src={formattedUrl}
@@ -315,30 +327,49 @@ export const PropertyDetail: React.FC = () => {
 
             {/* Reviews Rendering Engine matching your design card */}
             <div className="pt-6 border-t border-gray-100">
-              <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-1">
-                <span className="text-yellow-500">★</span> {property.rating || '4.5'} • {property.reviewsCount} recensioner
-              </h4>
-              <div className="space-y-4">
-                {property.reviewsList?.map((rev) => (
-                  <div key={rev._id} className="border border-gray-100 p-4 rounded-xl shadow-2xs bg-gray-50/50">
-                    <div className="flex justify-between items-center mb-2">
-                      <div>
-                        <h5 className="text-xs font-bold text-gray-900">{rev.author}</h5>
-                        <p className="text-[10px] text-gray-600">{rev.date}</p>
-                      </div>
-                      <div className="text-yellow-500 text-xs">{'★'.repeat(rev.rating)}</div>
-                    </div>
-                    <p className="text-xs text-gray-700 leading-relaxed">{rev.comment}</p>
+              <div className="flex justify-between items-center mb-4">
+<h4 className="text-sm font-bold text-gray-900 flex items-center gap-1">
+  <span className="text-yellow-500">★</span> {avgRating} • {reviews.length} recensioner
+</h4>
+                
+                {localStorage.getItem('token') ? (
+  <button 
+    onClick={() => setIsReviewModalOpen(true)} // Ändrat till true
+    className="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-medium hover:bg-indigo-100 transition"
+  >
+    Skriv recension
+  </button>
+) : null}
 
-                    {/* Host Reply Box (Svar från värden) */}
-                    {rev.hostReply && (
-                      <div className="mt-3 pl-3 border-l-2 border-gray-200 text-xs text-gray-700 italic">
-                        <p className="font-semibold text-[11px] text-gray-700 not-italic mb-0.5">Svar från värden:</p>
-                        "{rev.hostReply}"
-                      </div>
-                    )}
-                  </div>
-                ))}
+              </div>
+              <div className="space-y-4">
+{/* Mappa över din 'reviews'-state istället */}
+{reviews.map((rev) => (
+  <div key={rev._id} className="border border-gray-100 p-4 rounded-xl shadow-2xs bg-gray-50/50">
+    <div className="flex justify-between items-center mb-2">
+      <div>
+        {/* Här använder vi rev.author.name tack vare .populate() i backend */}
+        <h5 className="text-xs font-bold text-gray-900">{rev.author.name}</h5>
+        
+        {/* Om du vill visa datum från createdAt (Mongoose skapar detta automatiskt) */}
+        <p className="text-[10px] text-gray-600">
+           {new Date(rev.createdAt).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' })}
+        </p>
+      </div>
+      <div className="text-yellow-500 text-xs">{'★'.repeat(rev.rating)}</div>
+    </div>
+    
+    <p className="text-xs text-gray-700 leading-relaxed">{rev.comment}</p>
+
+    {/* Host Reply Box */}
+    {rev.hostReply && (
+      <div className="mt-3 pl-3 border-l-2 border-gray-200 text-xs text-gray-700 italic">
+        <p className="font-semibold text-[11px] text-gray-700 not-italic mb-0.5">Svar från värden:</p>
+        "{rev.hostReply}"
+      </div>
+    )}
+  </div>
+))}
               </div>
             </div>
           </div>
@@ -403,6 +434,65 @@ export const PropertyDetail: React.FC = () => {
 
         </div>
       </div>
+      {isReviewModalOpen && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white p-6 rounded-2xl max-w-sm w-full shadow-xl">
+      <h3 className="font-bold text-lg mb-4">Lämna en kommentar</h3>
+      
+      <div className="mb-6">
+        <textarea 
+          value={comment} 
+          onChange={(e) => setComment(e.target.value)}
+          className="w-full border border-gray-200 rounded-lg p-3 text-sm h-32 focus:border-indigo-500 outline-none resize-none" 
+          placeholder="Vad tyckte du om boendet?"
+        />
+      </div>
+
+      <div className="flex gap-1">
+  {[1, 2, 3, 4, 5].map((star) => (
+    <button
+      key={star}
+      onClick={() => setRating(star)}
+      // Om rating är null är alla grå. Om användaren klickar blir de gula.
+      className={`text-2xl ${rating !== null && star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
+    >
+      ★
+    </button>
+  ))}
+</div>
+
+      <div className="flex gap-2">
+        <button 
+          onClick={() => setIsReviewModalOpen(false)} 
+          className="flex-1 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg transition"
+        >
+          Avbryt
+        </button>
+        <button 
+          onClick={async () => {
+            try {
+              // Vi skickar bara kommentaren nu (och ett default-betyg på 5 så länge)
+              await axios.post(`http://localhost:3000/api/v1/listnings/${id}/reviews`, { 
+                comment,
+                rating
+              }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+              });
+              setIsReviewModalOpen(false);
+              window.location.reload(); 
+            } catch (err) {
+              alert("Kunde inte skicka recensionen.");
+            }
+          }}
+          className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition"
+        >
+          Publicera
+        </button>
+      </div>
+      
+    </div>
+  </div>
+)}
     </div>
     
   );

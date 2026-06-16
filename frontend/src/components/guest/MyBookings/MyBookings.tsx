@@ -58,6 +58,7 @@ useEffect(() => {
 
 //handle checkout
 const handleCheckout = (booking: BookingData) => {
+    const propId = typeof booking.propertyId === 'string' ? booking.propertyId : booking.propertyId?._id;
   navigate(`/properties/${booking.propertyId}/checkout`, {
     state: {
       bookingId: booking._id,
@@ -74,8 +75,8 @@ const handleCheckout = (booking: BookingData) => {
     if(loading)return <div className='text-center py-20 text-gray-500'>Laddar din bokningar ... </div>;
 
     const today = new Date();
-    const upcomingBookings = bookings.filter(b=>new Date(b.startDate) >= today && b.status !== 'canceled');
-    const pastBookings = bookings.filter(b=>new Date(b.startDate) < today || b.status === 'canceled');
+    const upcomingBookings = bookings.filter(b=>new Date(b.startDate) >= today && b.status !== 'cancelled');
+    const pastBookings = bookings.filter(b=>new Date(b.startDate) < today || b.status === 'cancelled');
     const currentDisplayList = activeTab === 'upcoming' ? upcomingBookings : pastBookings;
 
     //Calculation for dashboard grid
@@ -127,23 +128,30 @@ const handleCheckout = (booking: BookingData) => {
         {/* Nav switch Toggles */}
         <BookingTabs activeTab={activeTab} setActiveTab={setActiveTab}/>
 
-        {/* Loop Rendering Cards */}
-        <div className='space-y-4'>
-                {currentDisplayList.length > 0 ? (
-                    currentDisplayList.map(b => (
-                        <BookingCard 
-                            key={b._id} 
-                            booking={b}
-                            onCancel={handleCancelBooking}
-                            onCheckout={handleCheckout}
-                        />
-                    ))
-                ) : (
-                    <div className="text-center py-16 border border-dashed border-gray-300 rounded-2xl bg-gray-50 text-sm text-gray-400 font-medium">
-                        Inga bokningar hittades i den här listan.
-                    </div>
-                )}
-            </div>
+{/* Loop Rendering Cards */}
+<div className='space-y-4'>
+    {currentDisplayList.length > 0 ? (
+        currentDisplayList.map(b => (
+            b.propertyId ? (
+                <BookingCard 
+                    key={b._id} 
+                    booking={b} 
+                    onCancel={handleCancelBooking} 
+                    onCheckout={() => handleCheckout(b)}
+                />
+            ) : (
+                // Om boende saknas, visa en diskret rad istället för att tro att listan är slut
+                <div key={b._id} className="p-4 bg-red-50 text-red-500 rounded-xl text-xs">
+                    Varning: Bokning {b._id} saknar boendedata.
+                </div>
+            )
+        ))
+    ) : (
+        <div className="text-center py-16 border border-dashed border-gray-300 rounded-2xl bg-gray-50 text-sm text-gray-400 font-medium">
+            Inga bokningar hittades i den här listan.
         </div>
-    );
+    )}
+</div>
+</div>
+  );
 };

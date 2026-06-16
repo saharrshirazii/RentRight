@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose'; 
 import Favorite from '../models/Favorite';
-import { IProperty } from '../models/Property'; 
+import { IProperty } from '../models/property'; 
 import {logger} from './../logger/logger'
 
 interface PopulatedFavorite {

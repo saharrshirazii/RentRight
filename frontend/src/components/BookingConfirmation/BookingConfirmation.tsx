@@ -5,11 +5,12 @@ import { Property } from '../../types/property';
 import CheckIn from '../Checkin/Checkin';
 import { GiConfirmed } from 'react-icons/gi';
 
-// Hjälpfunktion för att formatera bild-URL om den saknas i din fil sedan tidigare
+// Hjälpfunktion för att formatera bild-URL från uploaded bilder
 const formatImgUrl = (url?: string) => {
-    if (!url) return '';
+    if (!url) return 'https://via.placeholder.com/400';
     if (url.startsWith('http')) return url;
-    return `http://localhost:3000/assets/${url}`;
+    if (url.startsWith('/')) return `http://localhost:3000${url}`;
+    return `http://localhost:3000/${url}`;
 };
 
 export default function BookingConfirmation() {
@@ -90,7 +91,9 @@ export default function BookingConfirmation() {
 
     // Form submit handler
     const handleConfirmAndBook = async (e: React.FormEvent) => {
+        const token = localStorage.getItem('token');
         e.preventDefault();
+        console.log("DEBUG: Försöker boka med ID:", id);
         if (!termsAccepted || !cancelationAccepted) return alert('Du måste godkänna bokningsvillkoren.');
         
         const loggedInUser = localStorage.getItem('user');
@@ -379,7 +382,7 @@ export default function BookingConfirmation() {
                         </div>
                         {/* Image */}
                         <div className='p-4'>
-                            <img src={`http://localhost:3000/assets/${property.images?.[0]}`} alt={property.title} className="w-full h-40 object-cover rounded-2xl overflow-hidden" />
+                            <img src={formatImgUrl(typeof property.images?.[0] === 'string' ? property.images[0] : (property.images[0] as any)?.url)} alt={property.title} className="w-full h-40 object-cover rounded-2xl overflow-hidden" />
                         </div>
                         {/* Quick summary preview block */}
                         <div className='p-4 text-left text-xs text-gray-600 space-y-2'>

@@ -8,6 +8,7 @@ import { ListingImage } from '../types';
 import {logger} from './../logger/logger'
 import { AdminLog } from '../models/AdminLog'; // Importera den nya loggmodellen
 import Message from '../models/Message'; // Importera meddelandemodellen
+import { Review } from '../models/Review';
 
 const parseAmenities = (value: unknown) => {
   if (Array.isArray(value)) {
@@ -125,6 +126,19 @@ export const getListning = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Fel vid hämtning av annons:', error);
     res.status(500).json({ message: 'Kunde inte hämta annonsen.' });
+  }
+};
+
+export const getReviews = async (req: Request, res: Response) => {
+  try {
+    const reviews = await Review.find({ propertyId: req.params.id })
+                                .populate('author', 'name')
+                                .sort({ createdAt: -1 });
+
+    res.json(reviews);
+  } catch (error) {
+    console.error('Fel vid hämtning av recensioner:', error);
+    res.status(500).json({ message: 'Kunde inte hämta recensioner.' });
   }
 };
 
@@ -365,10 +379,12 @@ export const reviewListning = async (req: Request, res: Response) => {
       return;
     }
 
+    const action = status === 'approved' ? 'APPROVE_LISTING' : status === 'needs_revision' ? 'REVISION_REQUEST' : 'REJECT_LISTING';
+
     // 1. Skapa logg för granskningsåtgärden
     await AdminLog.create({
       adminId,
-      action: status === 'approved' ? 'APPROVE_LISTING' : status === 'needs_revision' ? 'REVISION_REQUEST' : 'REJECT_LISTING',
+      action: action,
       targetId: req.params.id,
       reason: feedback ? String(feedback).trim() : 'Godkänd utan anmärkning'
     });

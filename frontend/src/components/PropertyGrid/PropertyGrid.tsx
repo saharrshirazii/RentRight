@@ -261,9 +261,9 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         />
       </Link>
 
-      <div className="p-4 flex flex-col flex-grow">
+      <div className="p-4 flex flex-col grow">
         <div className="flex justify-between items-start">
-          <Link to={`/properties/${property._id}`} className="hover:underline block flex-grow max-w-[80%]" >
+          <Link to={`/properties/${property._id}`} className="hover:underline block grow max-w-[80%]" >
             <h3 className="font-bold text-gray-900 truncate w-4/5">{property.title}</h3>
           </Link>
         </div>

@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import Booking from '../models/Booking';
-import Property from '../models/Property';
+
 import User from '../models/User';
 import { sendBookingConfirmation, sendPaymentConfirmation } from '../config/nodemailer';
 import { logger } from './../logger/logger';
 import mongoose from 'mongoose';
+import Listning from '../models/Listning';
 
 // GET /bookings/property/:propertyId - Hämtar icke-avbokade bokningar för fastighetens tidslinje
 export const getBookingsForProperty = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -29,6 +30,7 @@ export const getBookingsForProperty = async (req: Request, res: Response, next: 
 
 // POST /bookings - Skapa en ny bokning
 export const createBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    console.log("!!! createBooking controller anropad !!!");
     try {
         const { propertyId, checkIn, checkOut } = req.body;
         const userId = req.user?.id;
@@ -69,7 +71,7 @@ export const createBooking = async (req: Request, res: Response, next: NextFunct
             return;
         }
 
-        const property = await Property.findById(propertyId);
+        const property = await Listning.findById(propertyId);
 
         if (!property) {
             logger.warn({ propertyId }, "Bokningen misslyckades – Målfastigheten finns inte");
@@ -208,7 +210,7 @@ export const getMyBookings = async (req: Request, res: Response, next: NextFunct
         const bookings = await Booking.find({ userId })
             .populate({
                 path: 'propertyId',
-                select: 'title location images pricePerNight price'
+                select: 'title location images price'
             })
             .sort('-createdAt');
 
@@ -234,13 +236,13 @@ export const getHostBookings = async (req: Request, res: Response, next: NextFun
         }
 
         // Hittar alla fastigheter som tillhör den inloggade värden
-        const hostListings = await Property.find({ userId: new mongoose.Types.ObjectId(hostId) }).select('_id');
+        const hostListings = await Listning.find({ userId: new mongoose.Types.ObjectId(hostId as string) } as any ).select('_id');
         const propertyIds = hostListings.map((listing) => listing._id);
 
         const bookings = await Booking.find({ propertyId: { $in: propertyIds } })
             .populate({
                 path: 'propertyId',
-                select: 'title location images pricePerNight price'
+                select: 'title location images price'
             })
             .populate({
                 path: 'userId',

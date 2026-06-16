@@ -31,15 +31,24 @@ interface BookingCardProps {
 
 export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onCheckout }) => {
   const navigate = useNavigate();
+
+  if (!booking.propertyId) {
+    return <div className="p-4 border rounded-2xl mb-4">Laddar boendeinformation...</div>;
+  }
+
   const { startDate, endDate, totalPrice, status, _id, propertyId: property } = booking;
 
   const start = new Date(startDate).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
   const end = new Date(endDate).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
 
   // Safety fallback for formatting asset URLs safely
-  const formatImgUrl = (url: string) => {
-    if (!url) return 'https://via.placeholder.com/400';
-    return url.startsWith('http') ? url : `http://localhost:3000/assets/${url}`;
+  const formatImgUrl = (url: any) => {
+    if (typeof url !== 'string' || !url) {
+      return 'https://via.placeholder.com/400';
+    }
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/')) return `http://localhost:3000${url}`;
+    return `http://localhost:3000/${url}`;
   };
 
   return (
@@ -54,11 +63,12 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onC
 
       {/* Image display */}
       <div className='w-80 h-full overflow-hidden p-4 shrink-0'>
-        <img
-          src={formatImgUrl(property?.images?.[0])}
-          alt={property?.title || 'Boende bild'}
-          className='w-full h-full object-cover rounded-xl'
-        />
+<img
+  // Vi skickar in första bilden om den finns, annars null
+  src={formatImgUrl(property?.images && Array.isArray(property.images) ? property.images[0] : null)}
+  alt={property?.title || 'Boende bild'}
+  className='w-full h-full object-cover rounded-xl'
+/>
       </div>
 
       {/* Description */}
