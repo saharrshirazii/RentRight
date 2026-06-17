@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { addListning, editListning, getListning, listApprovedListnings, listListnings, removeListning, reviewListning, getReviews } from '../controllers/listningController';
+import { addListning, editListning, getListning, listApprovedListnings, listListnings, removeListning, reviewListning, getReviews, addReview } from '../controllers/listningController';
 import { uploadListingImages } from '../middleware/uploadMiddleware';
 import { verifyToken } from '../middleware/authMiddleware';
 import { checkRole } from '../middleware/roleMiddleware';
@@ -14,6 +14,8 @@ router.get('/', listListnings);
 router.get('/:id', getListning);
 
 router.get('/:id/reviews', getReviews);
+
+router.post('/:id/reviews', verifyToken, addReview);
 
 
 router.post(

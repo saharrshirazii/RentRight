@@ -9,10 +9,9 @@ console.log("SMTP_PASSWORD exists:", !!process.env.SMTP_PASSWORD);
 
 // Create a transporter using SMTP
 export const transporter = nodemailer.createTransport({
-  service: "gmail",
-  //   host: "smtp.example.com",
-  //   port: 587,
-  //   secure: false,
+  host: "smtp-mail.outlook.com",
+  port: 587,
+  secure: false, // true for 465, false for other ports
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD,

@@ -8,6 +8,7 @@ import {
   getBookingById, 
   cancelBooking,
   payBooking,
+  getAllBookings,
 } from '../controllers/BookingController';
 
 const router = express.Router();
@@ -18,6 +19,7 @@ router.use(verifyToken);
 router.route('/').post(createBooking);
 router.route('/my-bookings').get(getMyBookings);
 router.route('/host').get(checkRole(['host', 'admin']), getHostBookings);
+router.route('/all').get(checkRole(['admin']), getAllBookings);
 router.route('/:id').get(getBookingById);
 router.route('/:id/cancel').patch(cancelBooking);
 router.route('/:id/pay').post(payBooking);

@@ -16,21 +16,24 @@ export const CheckoutPage: React.FC = () => {
     } = (location.state as any) || {};
 
     useEffect(() => {
-        fetch(`http://localhost:3000/api/v1/properties/${id}`)
+        fetch(`http://localhost:3000/api/v1/listnings/${id}`)
             .then(res => res.json())
-            .then(data => setProperty(data.data)); 
+            .then(data => setProperty(data)); 
     }, [id]);
 
     // Match Processing calculations
-    const start = checkIn ? new Date(checkIn) : null;
-    const end = checkOut ? new Date(checkOut) : null;
+    const start = checkIn ? new Date(checkIn.replace(/\//g, '-')) : null;
+    const end = checkOut ? new Date(checkOut.replace(/\//g, '-')) : null;
     const totalNights =
         start && end && end > start
             ? Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
             : 0;
+    
+    // Handle both pricePerNight and price fields
+    const pricePerNight = property?.pricePerNight ?? property?.price ?? 0;
     const rawBasePrice =
         property && totalNights > 0
-            ? totalNights * property.pricePerNight
+            ? totalNights * pricePerNight
             : 0;
 
     const serviceFee =

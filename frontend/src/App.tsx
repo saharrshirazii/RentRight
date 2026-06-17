@@ -37,9 +37,7 @@ const tabs: Array<{ id: TabId; label: string }> = [
   { id: "bokningar", label: "Bokningar" },
   { id: "meddelanden", label: "Meddelanden" },
   { id: "tillganglighet", label: "Tillgänglighet" },
-  { id: "prissattning", label: "Prissättning" },
   { id: "recensioner", label: "Recensioner" },
-  { id: "statistik", label: "Statistik" },
 ];
 
 const stats = [

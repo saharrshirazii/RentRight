@@ -142,6 +142,39 @@ export const getReviews = async (req: Request, res: Response) => {
   }
 };
 
+export const addReview = async (req: Request, res: Response) => {
+  try {
+    const { comment, rating } = req.body;
+    const { id } = req.params; // propertyId
+    const authorId = req.user?.id;
+
+    if (!authorId) {
+      return res.status(401).json({ message: "Kunde inte identifiera användaren" });
+    }
+
+    if (!comment) {
+      return res.status(400).json({ message: "Kommentar krävs" });
+    }
+
+    const newReview = new Review({
+      propertyId: id,
+      author: authorId,
+      rating: rating || null,
+      comment
+    });
+
+    await newReview.save();
+    
+    // Populate author before returning
+    await newReview.populate('author', 'name email');
+    
+    res.status(201).json(newReview);
+  } catch (error: any) {
+    console.error("Fel vid skapande av recension:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const addListning = async (req: Request, res: Response) => {
   try {
     const { title, description, location, price } = req.body;

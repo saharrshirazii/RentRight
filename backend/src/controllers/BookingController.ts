@@ -42,8 +42,13 @@ export const createBooking = async (req: Request, res: Response, next: NextFunct
             return;
         }
 
+        // Parse dates and normalize to midnight UTC to avoid timezone issues
         const start = new Date(checkIn);
         const end = new Date(checkOut);
+        
+        // Set times to midnight UTC for consistent comparison
+        start.setUTCHours(0, 0, 0, 0);
+        end.setUTCHours(0, 0, 0, 0);
 
         if (start >= end) {
             logger.warn({ userId, checkIn, checkOut }, "Bokningen misslyckades – incheckningsdatumet är efter utcheckningen.");
@@ -55,6 +60,7 @@ export const createBooking = async (req: Request, res: Response, next: NextFunct
         }
 
         // Kontrollera överlappande bokningar
+        console.log("DEBUG: Checking for conflicts with dates:", { start, end, propertyId });
         const conflict = await Booking.findOne({
             propertyId,
             status: { $ne: "cancelled" },
@@ -62,13 +68,23 @@ export const createBooking = async (req: Request, res: Response, next: NextFunct
             endDate: { $gt: start },
         });
 
+        console.log("DEBUG: Conflict found:", conflict);
+
         if (conflict) {
-            logger.warn({ propertyId, checkIn, checkOut, conflictId: conflict._id }, "Bokningen misslyckades - Datumöverlappning/konflikt hittades.");
-            res.status(409).json({
-                status: "fail",
-                message: "Boendet är redan bokat.",
-            });
-            return;
+            // Allow same-day turnover: if existing booking ends on the same day new booking starts, it's not a conflict
+            const existingEnd = new Date(conflict.endDate);
+            existingEnd.setUTCHours(0, 0, 0, 0);
+            
+            if (existingEnd.getTime() === start.getTime()) {
+                console.log("DEBUG: Same-day turnover allowed, no conflict");
+            } else {
+                logger.warn({ propertyId, checkIn, checkOut, conflictId: conflict._id, conflictStartDate: conflict.startDate, conflictEndDate: conflict.endDate }, "Bokningen misslyckades - Datumöverlappning/konflikt hittades.");
+                res.status(409).json({
+                    status: "fail",
+                    message: "Boendet är redan bokat.",
+                });
+                return;
+            }
         }
 
         const property = await Listning.findById(propertyId);
@@ -122,17 +138,26 @@ export const createBooking = async (req: Request, res: Response, next: NextFunct
 
         logger.info({ bookingId: booking._id, userId, totalPrice }, "Bokningen har sparats i databasen");
 
+        // Use customer details from booking request if provided, otherwise fall back to user data
+        const customerEmail = req.body.customerDetails?.email;
+        const customerName = req.body.customerDetails?.firstName && req.body.customerDetails?.lastName 
+            ? `${req.body.customerDetails.firstName} ${req.body.customerDetails.lastName}`
+            : null;
+
         const user = await User.findById(userId);
-        if (user) {
+        const emailToSend = customerEmail || user?.email;
+        const nameToSend = customerName || user?.name;
+
+        if (emailToSend) {
             sendBookingConfirmation({
-                email: user.email,
-                guestName: user.name,
+                email: emailToSend,
+                guestName: nameToSend || 'Vän',
                 propertyTitle: (property as any).title,
                 checkIn: start.toLocaleDateString("sv-SE"),
                 checkOut: end.toLocaleDateString("sv-SE"),
                 totalPrice,
             });
-            logger.info({ bookingId: booking._id, email: user.email }, "Bokningsbekräftelsemejlet har utlösts");
+            logger.info({ bookingId: booking._id, email: emailToSend }, "Bokningsbekräftelsemejlet har utlösts");
         }
 
         res.status(201).json({
@@ -201,6 +226,32 @@ export const payBooking = async (req: Request, res: Response, next: NextFunction
     }
 };
 
+// GET /bookings/all - Hämta alla bokningar (admin only)
+export const getAllBookings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        logger.info("Admin hämtar alla bokningar");
+        const bookings = await Booking.find()
+            .populate({
+                path: 'propertyId',
+                select: 'title location images price'
+            })
+            .populate({
+                path: 'userId',
+                select: 'name email'
+            })
+            .sort('-createdAt');
+
+        res.status(200).json({
+            status: 'success',
+            results: bookings.length,
+            data: bookings,
+        });
+    } catch (error: any) {
+        logger.error({ err: error.message }, "Error fetching all bookings");
+        next(error);
+    }
+};
+
 // GET /bookings - Hämta alla bokningar för den inloggade gästen
 export const getMyBookings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -239,6 +290,9 @@ export const getHostBookings = async (req: Request, res: Response, next: NextFun
         const hostListings = await Listning.find({ userId: new mongoose.Types.ObjectId(hostId as string) } as any ).select('_id');
         const propertyIds = hostListings.map((listing) => listing._id);
 
+        console.log("DEBUG: Host ID:", hostId);
+        console.log("DEBUG: Host property IDs:", propertyIds);
+
         const bookings = await Booking.find({ propertyId: { $in: propertyIds } })
             .populate({
                 path: 'propertyId',
@@ -249,6 +303,9 @@ export const getHostBookings = async (req: Request, res: Response, next: NextFun
                 select: 'name email'
             })
             .sort('-createdAt');
+
+        console.log("DEBUG: Found bookings:", bookings.length);
+        console.log("DEBUG: Bookings:", bookings.map(b => ({ id: b._id, propertyId: b.propertyId, paymentStatus: b.paymentStatus })));
 
         res.status(200).json({
             status: 'success',

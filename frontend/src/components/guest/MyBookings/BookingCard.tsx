@@ -43,9 +43,14 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onC
 
   // Safety fallback for formatting asset URLs safely
   const formatImgUrl = (url: any) => {
-    if (typeof url !== 'string' || !url) {
-      return 'https://via.placeholder.com/400';
+    if (!url) return 'https://via.placeholder.com/400';
+    
+    // Handle image objects with url property
+    if (typeof url === 'object' && url.url) {
+      url = url.url;
     }
+    
+    if (typeof url !== 'string') return 'https://via.placeholder.com/400';
     if (url.startsWith('http')) return url;
     if (url.startsWith('/')) return `http://localhost:3000${url}`;
     return `http://localhost:3000/${url}`;
@@ -109,7 +114,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onC
                   onClick={() => onCancel(_id)}
                   className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-100 text-rose-600 font-bold py-2 px-4 rounded-xl text-xs transition cursor-pointer"
                 ><FaRegTrashAlt className="text-xs" />
-                  Avboka resa
+                  Avboka boende
                 </button>
               )}
             </div>

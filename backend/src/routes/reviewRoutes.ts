@@ -4,6 +4,23 @@ import { verifyToken } from '../middleware/authMiddleware'; // Din middleware
 
 const router = express.Router();
 
+// GET reviews for a specific property
+router.get('/:id/reviews', async (req, res) => {
+  try {
+    const { id } = req.params; // propertyId
+    
+    const reviews = await Review.find({ propertyId: id })
+      .populate('author', 'name email')
+      .sort('-createdAt');
+    
+    res.status(200).json(reviews);
+  } catch (error: any) {
+    console.error("Fel vid hämtning av recensioner:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST a new review for a property
 router.post('/:id/reviews', verifyToken, async (req, res) => {
   try {
     const { comment, rating } = req.body;
@@ -24,6 +41,10 @@ router.post('/:id/reviews', verifyToken, async (req, res) => {
     });
 
     await newReview.save();
+    
+    // Populate author before returning
+    await newReview.populate('author', 'name email');
+    
     res.status(201).json(newReview);
   } catch (error: any) {
     console.error("Fel vid skapande av recension:", error);

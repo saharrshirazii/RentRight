@@ -8,6 +8,7 @@ interface Booking {
   endDate: string;
   totalPrice: number;
   status: 'pending' | 'confirmed' | 'cancelled';
+  paymentStatus?: 'paid' | 'unpaid';
 }
 
 const API_BASE_URL = "http://localhost:3000";
@@ -131,6 +132,9 @@ const HostBookings: React.FC = () => {
                   <strong style={{ fontSize: "20px", color: "#111827" }}>{booking.totalPrice.toLocaleString("sv-SE")} kr</strong>
                   <span className={`status-pill status-pill--${statusTone}`}>
                     {statusLabel}
+                  </span>
+                  <span style={{ fontSize: "12px", color: booking.paymentStatus === 'paid' ? "#10b981" : "#f59e0b", fontWeight: "600" }}>
+                    {booking.paymentStatus === 'paid' ? '✓ Betald' : '⚠ Ej betald'}
                   </span>
                 </div>
               </div>
