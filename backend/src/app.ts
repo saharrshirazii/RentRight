@@ -74,7 +74,7 @@ app.use('/api/v1/bookings', (req, res, next) => {
 app.use('/api/v1/messages', messageRoutes);
 app.use('/api/v1/favorites', favoriteRoutes);
 app.use('/api/v1/privacy', privacyRoutes);
-app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/listnings', reviewRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send({ message: 'RentRight API is ready' });

@@ -3,6 +3,7 @@ import { useParams, Params, Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { PropertyData } from '../../types/property'
 import Checkin from '../Checkin/Checkin'
+import { MessageModal } from '../Message/MessageModal'
 
 type ListingImage = {
   id: string;
@@ -40,6 +41,7 @@ type Listing = {
 type PropertyDisplay = {
   id: string;
   title: string;
+  userId: string;
   description: string;
   price: number;
   amenities: string[];
@@ -84,6 +86,9 @@ export const PropertyDetail: React.FC = () => {
 const [rating, setRating] = useState<number | null>(null); // Starta som null
 const [comment, setComment] = useState('');
 
+//Meddelanden 
+const [isMessageOpen, setIsMessageOpen] = useState(false);
+
   //to track the currently displayed large image
   const [activeImage, setActiveImage] = useState<string>('');
 
@@ -118,6 +123,18 @@ const [comment, setComment] = useState('');
       state: { checkIn, checkOut, guestsCount }
     });
   }
+
+const handleContactHost = () => {
+  // Nu när vi har lagt till userId i interfacet, 
+  // vet TypeScript att detta fält existerar.
+  const hostId = property?.userId;
+
+  if (hostId) {
+    navigate(`/chat/${hostId}`);
+  } else {
+    console.error("Kunde inte hitta userId för detta boende");
+  }
+};
 
 
 const [reviews, setReviews] = useState<any[]>([]);
@@ -307,6 +324,9 @@ const averageRating = calculateAverageRating();
                 <span>👥 {property.guests} gäster</span>
                 <span>🛏 {property.bedrooms} sovrum</span>
                 <span>🚿 {property.bathrooms} badrum</span>
+                <button onClick={() => setIsMessageOpen(true)}>
+  Kontakta hyresvärd
+</button>
               </div>
               <p className="text-xs text-gray-700 mt-4 leading-relaxed">
                 Härligt och rymligt boende perfekt för avkoppling. Denna {(property.category || 'Lägenhet').toLowerCase()} erbjuder bra standard, bekväma sängar, och ett fullt utrustat utrymme för en fantastisk vistelse.
@@ -493,6 +513,14 @@ const averageRating = calculateAverageRating();
     </div>
   </div>
 )}
+
+{/* Modalen (placera den längst ner i din return-block) */}
+<MessageModal 
+  isOpen={isMessageOpen} 
+  onClose={() => setIsMessageOpen(false)}
+  recipientId={property.userId} 
+  propertyTitle={property.title}
+/>
     </div>
     
   );

@@ -1,30 +1,37 @@
 import { Request, Response } from 'express';
-import IMessage  from '../models/Message';
-import {logger} from './../logger/logger'
+import Message from '../models/Message';
+import {logger} from './../logger/logger';
 
 
 
 export const sendMessage = async (req: Request, res: Response) => {
     try{
-        const {receiver, text} = req.body;
+        // 1. Ändra så att vi tar emot de namn som frontenden skickar
+        const { recipientId, content, propertyTitle } = req.body;
 
-        const sender:any = req.user?.id;
+        const sender: any = req.user?.id;
 
-        if(!sender || !receiver || !text){
-            //WARN LOG
-            logger.warn({ senderId: sender, receiverId: receiver, hasText: !!text }, "Meddelandeskapandet avvisades – obligatoriska parametrar saknas");
+        // 2. Uppdatera valideringen
+        if(!sender || !recipientId || !content){
+            logger.warn({ senderId: sender, receiverId: recipientId, hasText: !!content }, "Meddelandeskapandet avvisades");
             return res.status(400).json ({message: "Mottagare, text och giltig inloggning krävs."})
         }
 
-        const newMessage = await IMessage.create({ sender, receiver, text });
-        //INFO LOG
-        logger.info({ messageId: newMessage._id, sender, receiver }, "Meddelandet har skapats och skickats");
-        res.status(201).json({success:true, data:newMessage})
+        // 3. Skicka in datan till databasen
+        // Obs: Här mappar vi om till 'receiver' och 'text' som din modell vill ha
+        const newMessage = await Message.create({ 
+            sender, 
+            receiver: recipientId, 
+            text: content,
+            listingTitle: propertyTitle // Spara även titeln om du vill ha den i databasen
+        });
+        
+        logger.info({ messageId: newMessage._id, sender, receiver: recipientId }, "Meddelandet har skapats");
+        res.status(201).json({success: true, data: newMessage})
 
-    } catch(error:any){
+    } catch(error: any){
         console.error(error);
-        //ERROR LOG
-        logger.error({ err: error.message, senderId: req.user?.id }, "Kritiskt fel vid körning av meddelandeavsändningssekvens");
+        logger.error({ err: error.message, senderId: req.user?.id }, "Kritiskt fel");
         res.status(500).json ({message: "Serverfel"})
     }
 }
@@ -45,7 +52,7 @@ export const getConversation = async (req: Request, res: Response) => {
 
         //INFO LOG
         logger.info({ currentUserId: currentUser, chatPartnerId: userId }, "Hämtar loggar från chatttidslinjen mellan två deltagare");
-        const messages = await IMessage.find({$or:[{sender: currentUser, receiver: userId}, { sender: userId, receiver: currentUser }]} as any).sort({createdAt: 1})
+        const messages = await Message.find({$or:[{sender: currentUser, receiver: userId}, { sender: userId, receiver: currentUser }]} as any).sort({createdAt: 1})
 
         res.status(200).json({ success: true, data: messages })
 
@@ -65,7 +72,7 @@ export const deleteMessage = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Giltig inloggning och meddelande-ID krävs.' });
         }
 
-        const message = await IMessage.findById(messageId);
+        const message = await Message.findById(messageId);
         if (!message) {
             return res.status(404).json({ message: 'Meddelandet hittades inte.' });
         }
@@ -95,7 +102,7 @@ export const getInbox = async (req: Request, res: Response) => {
 
         //INFO LOG
         logger.info({ currentUserId: currentUser }, "Sammanställa unika chattkanaler för sammanfattning av inkorgen");
-        const allMessages = await IMessage.find({$or:[{sender: currentUser}, {receiver: currentUser}]} as any).sort({createdAt: -1})
+        const allMessages = await Message.find({$or:[{sender: currentUser}, {receiver: currentUser}]} as any).sort({createdAt: -1})
 
         let inbox: any[] = [];
 
@@ -134,7 +141,7 @@ export const getAllMessages = async (req: Request, res: Response) => {
             return res.status(401).json({message: "Du måste vara inloggad"})
         }
 
-        const messages = await IMessage.find({$or:[{sender: currentUser}, {receiver: currentUser}]} as any).sort({createdAt: -1})
+        const messages = await Message.find({$or:[{sender: currentUser}, {receiver: currentUser}]} as any).sort({createdAt: -1})
 
         res.status(200).json({success:true, data: messages})
 
