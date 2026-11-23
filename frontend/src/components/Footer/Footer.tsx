@@ -90,7 +90,6 @@ const Footer: React.FC = () => {
             <span>© 2026 RentRight AB</span>
             <span className="hidden md:inline">·</span>
             {/* <a href="#" className="hover:underline">Sekretess</a> */}
-            <span className="hidden md:inline">·</span>
             <a href="#" className="hover:underline">Villkor</a>
             <span className="hidden md:inline">·</span>
             <a href="#" className="hover:underline">Webbplatsöversikt</a>

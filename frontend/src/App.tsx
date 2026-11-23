@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, useNavigate } from 'react-router-dom'; 
+import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom'; 
 import { TokenExpiredModal } from "./components/TokenExpired/TokenExpiredModal";
 
 // Befintliga komponenter för gästflödet
@@ -247,9 +247,23 @@ useEffect(() => {
         />
 
         <Route path="/properties/:id" element={<PropertyDetail />} />
-        <Route path="/properties/:id/booking" element={<BookingConfirmation />} />
+        <Route 
+          path="/properties/:id/booking"
+          element={
+            localStorage.getItem('token') && localStorage.getItem('user')
+              ? <BookingConfirmation />
+              : <Navigate to="/login" replace />
+          }
+        />
         <Route path="/my-bookings" element={<MyBookings />} />
-        <Route path="/properties/:id/checkout" element={<CheckoutPage />} />
+        <Route 
+          path="/properties/:id/checkout" 
+          element={
+            localStorage.getItem('token') && localStorage.getItem('user')
+              ? <CheckoutPage />
+              : <Navigate to="/login" replace />
+          } 
+        />
         <Route path="/login" element={<Login/>}/>
         <Route path="/payment-success" element={<PaymentSuccessPage />} />
 

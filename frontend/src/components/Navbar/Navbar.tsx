@@ -1,5 +1,4 @@
 import { useState , useEffect } from 'react';
-import Toggle from './../Toggle/Toggle';
 import LogIn from '../../pages/auth/Login';
 import Register from '../../pages/auth/Register';
 import { IoIosArrowForward } from "react-icons/io";
@@ -49,29 +48,34 @@ const handleNav = (tab: string) => {
   const getToken = localStorage.getItem('token');
   const isLoggedIn = !!getToken;
   useEffect(() => {
-  const fetchBookingCount = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:3000/api/v1/bookings/my-bookings",
-        {
-          headers: {
-            Authorization: `Bearer ${getToken}`,
-          },
-        }
-      );
-
-      const json = await response.json();
-
-      if (response.ok) {
-        setBookingCount(json.data.length);
-      }
-    } catch (error) {
-      console.error(error);
+    if (!getToken) {
+      setBookingCount(0);
+      return;
     }
-  };
 
-  fetchBookingCount();
-}, []);
+    const fetchBookingCount = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:3000/api/v1/bookings/my-bookings",
+          {
+            headers: {
+              Authorization: `Bearer ${getToken}`,
+            },
+          }
+        );
+
+        const json = await response.json();
+
+        if (response.ok) {
+          setBookingCount(json.data.length);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchBookingCount();
+  }, [getToken]);
 
 
   return (
@@ -103,17 +107,7 @@ const handleNav = (tab: string) => {
 
         {/* Desktop Menu */}
         <div className="hidden sm:flex items-center gap-8 font-medium text-gray-600">
-          <div className="flex flex-wrap items-center justify-center">
-            <Toggle 
-              label="" 
-              initialState={true}
-              colorTheme={
-                showUser?.role === 'host' ? 'blue' :
-                showUser?.role === 'admin' ? 'black' :
-                'indigo'
-              }
-            />
-          </div>
+          {/* Theme toggle is intentionally hidden until dark mode is implemented. */}
 
           {/* Search Bar */}
           <div className="hidden lg:flex items-center text-sm gap-2 border border-gray-300 px-3 rounded-full hover:border-indigo-500 focus-within:border-indigo-500 transition">
@@ -129,9 +123,9 @@ const handleNav = (tab: string) => {
           </div>
 
           {/* Cart/Notification Icon */}
-          {!showUser || (showUser?.role !== 'host' && showUser?.role !== 'admin') ? (
+          {showUser && showUser.role !== 'host' && showUser.role !== 'admin' ? (
           <div className="relative cursor-pointer hover:opacity-80 transition">
-            <button onClick = {() => navigate('/my-bookings')}>
+            <button onClick={() => navigate('/my-bookings')}>
             <SlBasket size={25} className='text-indigo-500 font-bold'/>
             <span className="absolute -top-2 -right-3 flex items-center justify-center text-[10px] text-white bg-indigo-500 w-[18px] h-[18px] rounded-full">
               {bookingCount}

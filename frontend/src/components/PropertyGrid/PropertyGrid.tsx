@@ -70,17 +70,20 @@ const checkOut = queryParams.get('checkOut') || "";
     const fetchProperties = async () => {
       setLoading(true);
       try {
-// <<<<<<< HEAD
-//         const response = await getProperties(page, category, price, searchLocation, searchGuests, checkIn, checkOut);
-//         if (response) {
-//           setProperties(response.data);
-//           setTotalPages(response.pagination?.totalPages || 1);
-//           setTotalResults(response.pagination?.totalProperties || 0);
         const approvedListings = await getApprovedListings(category);
         if (approvedListings) {
-          setProperties(approvedListings);
+          const limit = 6;
+          const totalPages = Math.max(1, Math.ceil(approvedListings.length / limit));
+          const safePage = Math.min(page, totalPages);
+          const start = (safePage - 1) * limit;
+
+          setProperties(approvedListings.slice(start, start + limit));
           setTotalResults(approvedListings.length);
-          setTotalPages(1);
+          setTotalPages(totalPages);
+
+          if (safePage !== page) {
+            setPage(safePage);
+          }
         }
       } catch (err) {
         console.error("Fetch error:", err);
@@ -90,9 +93,7 @@ const checkOut = queryParams.get('checkOut') || "";
     };
 
     fetchProperties();
-  // }, [page, category, price, searchLocation, searchGuests , checkIn, checkOut]); 
-
-  }, [category]);
+  }, [page, category]);
 
   return (
     <div>

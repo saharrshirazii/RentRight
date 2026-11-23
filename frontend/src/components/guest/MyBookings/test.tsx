@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { Property } from './../../../types/property'
+import { Property } from '../../../types/property'
 
 export const CheckoutPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();

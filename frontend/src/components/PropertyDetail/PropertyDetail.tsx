@@ -112,8 +112,15 @@ const [comment, setComment] = useState('');
     }
   };
 
+  const isLoggedIn = Boolean(localStorage.getItem('token') && localStorage.getItem('user'));
+
   //go to the booking page
   const handleProceedToBooking = () => {
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: `/properties/${id}/booking` } });
+      return;
+    }
+
     navigate(`/properties/${id}/booking`, {
       state: { checkIn, checkOut, guestsCount }
     });
@@ -147,13 +154,9 @@ const [reviews, setReviews] = useState<any[]>([]);
           // Fallback images array if your database record only has 1 image
           const propertyImages = imageUrls.length >= 5
             ? imageUrls
-            : [
-              imageUrls[0] || 'https://via.placeholder.com/800x600',
-              imageUrls[1] || 'https://via.placeholder.com/800x600',
-              imageUrls[2] || 'https://via.placeholder.com/800x600',
-              imageUrls[3] || 'https://via.placeholder.com/800x600',
-              imageUrls[4] || 'https://via.placeholder.com/800x600',
-            ];
+            : imageUrls.length > 0
+              ? Array.from({ length: 5 }, (_, index) => imageUrls[index] || imageUrls[0])
+              : [];
 
           setProperty({
             ...fetchedData,
