@@ -1,0 +1,67 @@
+@reference "../../../index.css";
+
+/* selected day circle */
+.p-datepicker .p-datepicker-calendar td > span.p-highlight {
+    @apply rounded-full bg-indigo-700 text-white;
+}
+
+/* Hover states for unselected days */
+.p-datepicker .p-datepicker-calendar td > span:not(.p-highlight):hover {
+    @apply bg-indigo-50 rounded-full;
+}
+
+/* The "IDAG" button */
+.p-datepicker .p-datepicker-header .p-datepicker-today-button,
+.p-datepicker .p-datepicker-footer .p-button-text {
+    @apply !text-indigo-600 !font-bold;
+}
+
+/* Calender container */
+.custom-calendar-panel {
+    @apply !shadow-xl !rounded-2xl p-2 !z-[999] text-xs text-gray-700 bg-white border border-gray-100;
+    width: 225px !important;       
+    margin-left: -9px !important;
+}
+
+/* Today's specific day node style */
+.p-datepicker .p-datepicker-calendar td.p-datepicker-today > span {
+    @apply border border-indigo-600 text-indigo-600 font-extrabold rounded-full bg-transparent; 
+}
+
+.p-datepicker .p-datepicker-calendar td.p-datepicker-today > span.p-highlight {
+    @apply bg-indigo-700 text-white border-transparent;
+}
+
+/* Disabled past days */
+.p-datepicker .p-datepicker-calendar td .p-disabled {
+    @apply !text-gray-300 opacity-60 bg-transparent cursor-not-allowed;
+}
+
+.custom-calendar-panel .p-datepicker-calendar {
+    width: 100% !important; /* Forces the table to adapt strictly to the 225px parent */
+    @apply m-0 p-0;
+}
+
+.custom-calendar-panel .p-datepicker-calendar th, 
+.custom-calendar-panel .p-datepicker-calendar td {
+    @apply p-0; 
+    padding: 2px 1px !important; 
+}
+
+.custom-calendar-panel .p-datepicker-calendar td > span {
+    @apply text-xs font-medium mx-auto; 
+    width: 26px !important;  
+    height: 26px !important; 
+}
+
+.custom-calendar-panel .p-datepicker-header {
+    @apply pb-1.5 mb-1 border-b border-gray-100 text-xs p-1;
+}
+
+.p-calendar .p-inputtext:focus,
+.p-calendar .p-inputtext:focus-visible,
+.p-calendar :focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: #6366f1 !important; 
+}
