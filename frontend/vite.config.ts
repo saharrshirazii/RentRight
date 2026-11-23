@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const apiUrl = (env.VITE_API_URL || 'https://rent-property-backend.vercel.app').replace(/\/$/, '')
+  const apiUrl = (env.VITE_API_URL || 'https://rentright-backend.vercel.app').replace(/\/$/, '')
 
   return {
     plugins: [
