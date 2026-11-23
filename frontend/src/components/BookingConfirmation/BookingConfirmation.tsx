@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
+import { API_BASE_URL } from '../../config/api';
+
 
 import { Property } from '../../types/property';
 import CheckIn from '../Checkin/Checkin';
@@ -8,9 +10,14 @@ import { GiConfirmed } from 'react-icons/gi';
 // Hjälpfunktion för att formatera bild-URL från uploaded bilder
 const formatImgUrl = (url?: string) => {
     if (!url) return 'https://via.placeholder.com/400';
-    if (url.startsWith('http')) return url;
-    if (url.startsWith('/')) return `http://localhost:3000${url}`;
-    return `http://localhost:3000/${url}`;
+
+    if (url.startsWith('http')) {
+        return url;
+    }
+
+    const normalizedPath = url.startsWith('/') ? url : `/${url}`;
+
+    return `${API_BASE_URL.replace(/\/$/, '')}${normalizedPath}`;
 };
 
 export default function BookingConfirmation() {
@@ -50,7 +57,7 @@ export default function BookingConfirmation() {
             }
 
             try {
-                const url = `http://localhost:3000/api/v1/listnings/${id}`;
+                const url = `${API_BASE_URL}/api/v1/listnings/${id}`;
                 const response = await fetch(url);
 
                 if (!response.ok) {
@@ -110,7 +117,7 @@ export default function BookingConfirmation() {
         
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3000/api/v1/bookings', {
+            const response = await fetch(`${API_BASE_URL}/api/v1/bookings`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
