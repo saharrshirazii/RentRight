@@ -42,7 +42,15 @@ app.use(
 
 //Security & Parser Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:8080'],
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:8080',
+    'https://rentright-nine.vercel.app',
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma']
