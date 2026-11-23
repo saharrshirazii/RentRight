@@ -1,8 +1,6 @@
-
 require('dotenv').config();
 
 const requiredVars = [
-  'PORT',
   'MONGODB_URI',
   'JWT_SECRET',
   'NODE_ENV',
@@ -20,7 +18,7 @@ for (const varName of requiredVars) {
 }
 
 module.exports = {
-  port: parseInt(process.env.PORT, 10),
+  port: parseInt(process.env.PORT || '3000', 10),
   mongoUri: process.env.MONGODB_URI,
   jwtSecret: process.env.JWT_SECRET,
   nodeEnv: process.env.NODE_ENV,
