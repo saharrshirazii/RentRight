@@ -4,8 +4,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-console.log("SMTP_USER:", process.env.SMTP_USER);
-console.log("SMTP_PASSWORD exists:", !!process.env.SMTP_PASSWORD);
+// console.log("SMTP_USER:", process.env.SMTP_USER);
+// console.log("SMTP_PASSWORD exists:", !!process.env.SMTP_PASSWORD);
 
 // Create a transporter using SMTP
 export const transporter = nodemailer.createTransport({
@@ -70,7 +70,7 @@ interface PaymentEmailData {
 }
 //PAYMENT CONFIRMATION EMAIL
 export const sendPaymentConfirmation = async (payment: PaymentEmailData) => {
-    console.log("PAYMENT EMAIL DATA:", payment);
+    // console.log("PAYMENT EMAIL DATA:", payment);
 
   try {
     await transporter.sendMail({

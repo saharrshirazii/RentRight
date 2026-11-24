@@ -16,11 +16,14 @@ import errorHandler from './middleware/errorMiddleware';
 import { notFound } from './middleware/notfoundMiddleware';
 import { uploadDirectory } from './config/upload';
 import { logger } from './logger/logger';
+import { connectToDatabase } from './config/database';
 
 const pinoHttp = require('pino-http');
 const crypto = require('crypto');
 
 const app: Application = express();
+
+
 
 app.use(
   pinoHttp({
@@ -63,6 +66,17 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(uploadDirectory));
 app.use('/assets', express.static(path.join(__dirname, '../../frontend/src/assets')));
+
+// Ensure MongoDB is connected before handling requests
+app.use(async (req, res, next) => {
+    try {
+        await connectToDatabase();
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+
 
 app.use((req, res, next) => {
   console.log(`Backend mottog: ${req.method} ${req.url}`);
