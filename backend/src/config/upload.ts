@@ -3,7 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 
-const uploadDirectory = path.resolve(process.cwd(), 'uploads');
+const uploadDirectory = process.env.VERCEL
+  ? path.join('/tmp', 'uploads')
+  : path.resolve(process.cwd(), 'uploads');
 
 if (!fs.existsSync(uploadDirectory)) {
   fs.mkdirSync(uploadDirectory, { recursive: true });
@@ -22,8 +24,8 @@ const storage = multer.diskStorage({
 export const upload = multer({
   storage,
   limits: {
-    files: 12,                  
-    fileSize: 25 * 1024 * 1024, 
+    files: 12,
+    fileSize: 25 * 1024 * 1024,
   },
   fileFilter: (_req, file, cb) => {
     if (!file.mimetype.startsWith('image/')) {
