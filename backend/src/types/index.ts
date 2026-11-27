@@ -2,6 +2,7 @@ export type ListingImage = {
   id: string;
   originalName: string;
   filename: string;
+  localFilename?: string;
   mimetype: string;
   size: number;
   url: string;

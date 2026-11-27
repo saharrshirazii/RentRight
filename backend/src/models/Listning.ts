@@ -31,6 +31,7 @@ const ListingImageSchema = new Schema<ListingImage>(
     id: { type: String, required: true },
     originalName: { type: String, required: true },
     filename: { type: String, required: true },
+    localFilename: { type: String, required: false },
     mimetype: { type: String, required: true },
     size: { type: Number, required: true },
     url: { type: String, required: true },

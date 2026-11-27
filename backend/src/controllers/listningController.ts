@@ -3,12 +3,44 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Request, Response } from 'express';
 import { createListning, deleteListning, findListning, getListnings, getApprovedListnings, updateListning } from '../data/listnings';
-import { uploadDirectory } from '../config/upload';
+import { uploadDirectory, cloudinary } from '../config/upload';
 import { ListingImage } from '../types';
 import {logger} from './../logger/logger'
 import { AdminLog } from '../models/AdminLog'; // Importera den nya loggmodellen
 import Message from '../models/Message'; // Importera meddelandemodellen
 import { Review } from '../models/Review';
+
+const deleteStoredImage = async (image: ListingImage) => {
+  // Delete from Cloudinary
+  if (image.url.startsWith('https://res.cloudinary.com/')) {
+    await cloudinary.uploader.destroy(image.filename, {
+      resource_type: 'image',
+    });
+  }
+
+  // Delete local copy, if one exists
+  if (image.localFilename) {
+    const imagePath = path.join(uploadDirectory, image.localFilename);
+
+    await fs.unlink(imagePath).catch((err) => {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw err;
+      }
+    });
+  } else if (!image.url.startsWith('https://res.cloudinary.com/')) {
+    // Backward compatibility for old local-only images
+    const imagePath = path.join(uploadDirectory, image.filename);
+
+    await fs.unlink(imagePath).catch((err) => {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw err;
+      }
+    });
+  }
+};
+
+
+
 
 const parseAmenities = (value: unknown) => {
   if (Array.isArray(value)) {
@@ -88,6 +120,40 @@ const parsePropertyType = (value: unknown, fallback: PropertyType): PropertyType
     ? (propertyType as PropertyType)
     : fallback;
 };
+
+
+const mapUploadedImage = async (
+  file: Express.Multer.File
+): Promise<ListingImage> => {
+  // Vercel: Multer has already uploaded the image to Cloudinary
+  if (file.path?.startsWith('https://')) {
+    return {
+      id: file.filename,
+      originalName: file.originalname,
+      filename: file.filename,
+      mimetype: file.mimetype,
+      size: file.size,
+      url: file.path,
+    };
+  }
+
+  // Local development: upload the locally stored file to Cloudinary too
+  const result = await cloudinary.uploader.upload(file.path, {
+    folder: 'rentright/listings',
+    resource_type: 'image',
+  });
+
+  return {
+    id: result.public_id,
+    originalName: file.originalname,
+    filename: result.public_id,
+    localFilename: file.filename,
+    mimetype: file.mimetype,
+    size: file.size,
+    url: result.secure_url,
+  };
+};
+
 
 export const listListnings = async (_req: Request, res: Response) => {
   try {
@@ -222,15 +288,9 @@ export const addListning = async (req: Request, res: Response) => {
     const files = (req.files ?? []) as Express.Multer.File[];
     //INFO LOG
     logger.info({ fileCount: files.length }, "Bearbetar uppladdade filbilagor för listning");
-    const images: ListingImage[] = files.map((file) => ({
-      id: file.filename,
-      originalName: file.originalname,
-      filename: file.filename,
-      mimetype: file.mimetype,
-      size: file.size,
-      url: `/uploads/${file.filename}`,
-    }));
-
+const images: ListingImage[] = await Promise.all(
+  files.map(mapUploadedImage)
+);
 
     const listning = await createListning({
       userId: String(userId),
@@ -303,15 +363,9 @@ export const editListning = async (req: Request, res: Response) => {
 
     const propertyType = parsePropertyType(req.body.propertyType, currentListning.propertyType ?? 'Lägenhet');
     const files = (req.files ?? []) as Express.Multer.File[];
-    const uploadedImages: ListingImage[] = files.map((file) => ({
-      id: file.filename,
-      originalName: file.originalname,
-      filename: file.filename,
-      mimetype: file.mimetype,
-      size: file.size,
-      url: `/uploads/${file.filename}`,
-    }));
-
+const uploadedImages: ListingImage[] = await Promise.all(
+  files.map(mapUploadedImage)
+);
     const keepImageIds = parseKeepImageIds(req.body.keepImageIds);
     const keptImages = keepImageIds
       ? currentListning.images.filter((image) => keepImageIds.includes(image.id))
@@ -326,16 +380,17 @@ export const editListning = async (req: Request, res: Response) => {
       { listingId, keptCount: keptImages.length, uploadedCount: uploadedImages.length, removedCount: removedImages.length },
       "Recalculating gallery sync configurations"
     );
-    await Promise.all(
-      removedImages.map(async (image) => {
-        const imagePath = path.join(uploadDirectory, image.filename);
-          await fs.unlink(imagePath).catch((err) => {
-          //WARN LOG
-          logger.warn({ filename: image.filename, err: err.message }, "Misslyckades med att ta bort bildfilen från serverdisken under ersättningen");
-          return undefined;
-        });      
-      }),
-    );
+  await Promise.all(
+  removedImages.map(async (image) => {
+    await deleteStoredImage(image).catch((err) => {
+      // WARN LOG
+      logger.warn(
+        { filename: image.filename, err: err.message },
+        'Failed to delete image during listing update'
+      );
+    });
+  }),
+);
 
     
     
@@ -526,15 +581,15 @@ export const removeListning = async (req: Request, res: Response) => {
     //INFO LOG
     logger.info({ listingId, totalImagesToPurge: deletedListning.images.length }, "Startar raderingsloop för binär fil av bildbilaga");
     await Promise.all(
-      deletedListning.images.map(async (image) => {
-        const imagePath = path.join(uploadDirectory, image.filename);
-         await fs.unlink(imagePath).catch((err) => {
-          //WARN LOG
-          logger.warn({ filename: image.filename, err: err.message }, "Misslyckades med att rensa den föräldralösa filen från disklayouten under fullständig radering av listan.");
-          return undefined;
-        });
-            }),
-    );
+  deletedListning.images.map(async (image) => {
+    await deleteStoredImage(image).catch((err) => {
+      logger.warn(
+        { filename: image.filename, err: err.message },
+        'Failed to delete image during listing deletion'
+      );
+    });
+  }),
+);
     
 //INFO LOG
 logger.info({ listingId, purgedBy: currentUserId, actorRole: currentUserRole }, "Listning och tillhörande tillgångsfiler har tagits bort helt från ekosystemet");
